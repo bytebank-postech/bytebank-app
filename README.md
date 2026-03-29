@@ -46,6 +46,18 @@ A aplicação possui uma API fake com as seguintes rotas:
 | PUT    | /api/transactions/[id] | Edita uma transação        |
 | DELETE | /api/transactions/[id] | Exclui uma transação       |
 
+## Services
+
+Funções prontas pra consumir a API em `src/services/transactions.ts`:
+
+| Função                        | Tipo   | Descrição                  |
+| ----------------------------- | ------ | -------------------------- |
+| `getTransactions()`           | Server | Lista todas as transações  |
+| `getTransactionById(id)`      | Server | Busca uma transação por id |
+| `createTransaction(data)`     | Client | Cria uma nova transação    |
+| `updateTransaction(id, data)` | Client | Edita uma transação        |
+| `deleteTransaction(id)`       | Client | Exclui uma transação       |
+
 ## Estrutura do projeto
 
 ```
@@ -64,6 +76,8 @@ C:\bytebank-app
 |  |  └── ui/                # Componentes genéricos
 |  ├── data/
 |  |  └── transactions.json  # Mock de dados
+|  ├── services/
+|  |  └── transactions.ts    # Funções de acesso à API
 |  ├── styles/
 |  |  ├── mixins.scss        # Mixins de responsividade
 |  |  └── variables.scss     # Variáveis globais
@@ -76,10 +90,10 @@ C:\bytebank-app
 
 ## Equipe
 
-| Nome                                                 | Responsabilidade                   |
-| ---------------------------------------------------- | ---------------------------------- |
-| [@kaleobonatto](https://github.com/kaleobonatto)     | Setup, arquitetura e API Routes    |
-| [@vitoraf](https://github.com/vitoraf)               | Design System / Storybook / Vídeo  |
-| [@brendobc](https://github.com/brendobc)             | Design System / Storybook / Vídeo  |
-| [@ramillecsantos](https://github.com/ramillecsantos) | Home page + Listagem de transações |
-| [@carlosjosecjr](https://github.com/carlosjosecjr)   | Adicionar/Editar transação         |
+| Nome                                                 | Responsabilidade                  |
+| ---------------------------------------------------- | --------------------------------- |
+| [@kaleobonatto](https://github.com/kaleobonatto)     | Setup, arquitetura e API Routes   |
+| [@vitoraf](https://github.com/vitoraf)               | Design System / Storybook / Vídeo |
+| [@brendobc](https://github.com/brendobc)             | Design System / Storybook / Vídeo |
+| [@ramillecsantos](https://github.com/ramillecsantos) | Home page                         |
+| [@carlosjosecjr](https://github.com/carlosjosecjr)   | Adicionar/Editar transação        |
