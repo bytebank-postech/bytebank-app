@@ -1,0 +1,63 @@
+@use '@/styles/colors.scss' as *;
+
+.button {
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    // cores
+  }
+
+  &.medium {
+    padding: 8px 12px;
+  }
+
+  &.large {
+    padding: 12px 16px;
+  }
+
+  &.fullwidth {
+    width: 100%;
+  }
+
+  &.default {
+    background-color: $primary;
+    color: $white;
+
+    &:hover {
+      background-color: $primary-action;
+    }
+  }
+
+  &.secondary {
+    background-color: $secondary;
+    color: $white;
+
+    &:hover {
+      background-color: $secondary-action;
+    }
+  }
+
+  &.outline {
+    background-color: $white;
+    border: solid 1px $primary;
+    color: $primary;
+
+    &:hover {
+      background-color: $primary;
+      color: $white;
+    }
+  }
+
+  &.ghost {
+    background-color: $tertiary;
+    color: $typography-active;
+
+    &:hover {
+      background-color: $tertiary-action;
+    }
+  }
+}
