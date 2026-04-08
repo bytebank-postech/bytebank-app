@@ -1,8 +1,8 @@
-import Button from '@/components/ui/button/button'
 import Action from '@/components/ui/action/action'
 import Input from '@/components/transactions/inputs/input'
 import Select from '@/components/transactions/inputs/select'
 import Menu from '@/components/layout/menu/menu'
+import { Button } from '@/components/ui'
 export default function Home() {
   return (
     <main>
@@ -10,9 +10,10 @@ export default function Home() {
       <div>
         <h2>Botões</h2>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <Button btnClass="primary">Concluir transação</Button>
-          <Button btnClass="secondary">Concluir transação</Button>
-          <Button btnClass="highlight">Concluir transação</Button>
+          <Button variant="default">Concluir transação</Button>
+          <Button variant="secondary">Concluir transação</Button>
+          <Button variant="ghost">Concluir transação</Button>
+          <Button variant="outline">Concluir transação</Button>
         </div>
         <h2>Ações</h2>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
