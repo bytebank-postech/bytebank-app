@@ -1,27 +1,26 @@
 import Action from '@/components/ui/action/action'
 import Input from '@/components/transactions/inputs/input'
-import Select from '@/components/transactions/inputs/select'
 import Menu from '@/components/layout/menu/menu'
-import { Button } from '@/components/ui'
+import { Button, Select, Typography } from '@/components/ui'
 export default function Home() {
   return (
     <main>
-      <h1>Home</h1>
+      <Typography variant="title-lg">Home</Typography>
       <div>
-        <h2>Botões</h2>
+        <Typography variant="title">Botões</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Button variant="default">Concluir transação</Button>
           <Button variant="secondary">Concluir transação</Button>
           <Button variant="ghost">Concluir transação</Button>
           <Button variant="outline">Concluir transação</Button>
         </div>
-        <h2>Ações</h2>
+        <Typography variant="title">Ações</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Action action="edit"></Action>
           <Action action="delete"></Action>
           <Action action="more"></Action>
         </div>
-        <h2>Inputs</h2>
+        <Typography variant="title">Inputs</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Input
             inputType="select"
@@ -36,7 +35,7 @@ export default function Home() {
             ]}
           ></Select>
         </div>
-        <h2>Menu</h2>
+        <Typography variant="title">Menu</Typography>
         <Menu></Menu>
       </div>
     </main>

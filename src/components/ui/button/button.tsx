@@ -1,6 +1,7 @@
 import { getClassnames } from '@/utils'
 import styles from './Button.module.scss'
 import { ButtonProps } from './Button.types'
+import Typography from '../Typography/Typography'
 
 export default function Button({
   size = 'medium',
@@ -20,7 +21,11 @@ export default function Button({
 
   return (
     <button className={classnames} {...props}>
-      {children}
+      {typeof children === 'string' ? (
+        <Typography>{children}</Typography>
+      ) : (
+        children
+      )}
     </button>
   )
 }

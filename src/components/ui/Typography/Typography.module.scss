@@ -1,0 +1,7 @@
+@use './Body.module.scss' as *;
+@use './Title.module.scss' as *;
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-regular.ttf') format('truetype');
+}
