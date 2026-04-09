@@ -3,13 +3,12 @@
 .input {
   border-radius: 8px;
   border: none;
-  //   cursor: pointer;
+  font-family: 'Inter';
 
   &:disabled {
     cursor: not-allowed;
-    pointer-events: none;
     opacity: 0.8;
-    // cores
+    border: 2px solid $disabled-color !important;
   }
 
   &.medium {

@@ -2,10 +2,9 @@
 
 import Action from '@/components/ui/action/action'
 import Menu from '@/components/layout/menu/menu'
-import { Button, Select, Typography } from '@/components/ui'
+import { Button, Select, Typography, Input } from '@/components/ui'
 import Modal from '@/components/ui/modal/modal'
 import Text from '@/components/ui/text/text'
-import { Input } from '@/components/transactions/inputs'
 
 function openDialog() {
   const dialog = document.querySelector('dialog')
