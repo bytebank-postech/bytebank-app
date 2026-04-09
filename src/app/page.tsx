@@ -5,6 +5,7 @@ import Select from '@/components/transactions/inputs/select'
 import Menu from '@/components/layout/menu/menu'
 import { Button } from '@/components/ui'
 import Modal from '@/components/ui/modal/modal'
+import Text from '@/components/ui/text/text'
 function openDialog() {
   const dialog = document.querySelector('dialog')
   dialog?.showModal()
@@ -16,22 +17,30 @@ function closeDialog() {
 export default function Home() {
   return (
     <main>
-      <h1>Home</h1>
+      <Text size="h1" variant="default" weight="bold">
+        Home
+      </Text>
       <div>
-        <h2>Botões</h2>
+        <Text size="h2" variant="default" weight="bold">
+          Botões
+        </Text>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Button variant="default">Concluir transação</Button>
           <Button variant="secondary">Concluir transação</Button>
           <Button variant="ghost">Concluir transação</Button>
           <Button variant="outline">Concluir transação</Button>
         </div>
-        <h2>Ações</h2>
+        <Text size="h2" variant="default" weight="bold">
+          Ações
+        </Text>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Action action="edit"></Action>
           <Action action="delete"></Action>
           <Action action="more"></Action>
         </div>
-        <h2>Inputs</h2>
+        <Text size="h2" variant="default" weight="bold">
+          Inputs
+        </Text>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Input
             inputType="select"
@@ -46,14 +55,20 @@ export default function Home() {
             ]}
           ></Select>
         </div>
-        <h2>Menu</h2>
+        <Text size="h2" variant="default" weight="bold">
+          Menu
+        </Text>
         <Menu></Menu>
-        <h2>Modal</h2>
+        <Text size="h2" variant="default" weight="bold">
+          Modal
+        </Text>
         <Button variant="default" onClick={openDialog}>
           Abrir modal
         </Button>
         <Modal onClose={closeDialog}>
-          <h2>Modal</h2>
+          <Text size="h2" variant="default" weight="bold">
+            Modal
+          </Text>
           <Input
             inputType="select"
             placeholder="Selecione o tipo de transação"
@@ -67,6 +82,14 @@ export default function Home() {
             ]}
           ></Select>
         </Modal>
+        <Text size="h2" variant="default" weight="bold">
+          Text
+        </Text>
+        <Text size="p" variant="default">
+          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Rem optio
+          iure inventore quis, recusandae natus a autem culpa! Eos molestias
+          ipsum error vel ratione ab saepe, nostrum molestiae architecto cum?
+        </Text>
       </div>
     </main>
   )

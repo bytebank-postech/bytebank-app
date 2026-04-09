@@ -1,0 +1,54 @@
+@use '@/styles/colors.scss' as *;
+
+.text {
+  &.default {
+    color: $typography-default;
+  }
+
+  &.active {
+    color: $typography-active;
+  }
+  &.secondary {
+    color: $typography-secondary;
+  }
+  &.ghost {
+    color: $typography-disabled;
+  }
+  &.danger {
+    color: $secondary;
+  }
+  &.success {
+    color: $primary;
+  }
+  &.h1 {
+    font-size: 24px;
+    font-weight: 600;
+  }
+  &.h2 {
+    font-size: 22px;
+    font-weight: 600;
+  }
+  &.h3 {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  &.h4 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  &.h5 {
+    font-size: 18px;
+    font-weight: 400;
+  }
+  &.h6 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  &.p {
+    font-size: 16px;
+    font-weight: 400;
+  }
+  &.bold {
+    font-weight: bold;
+  }
+}
