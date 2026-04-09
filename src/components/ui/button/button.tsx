@@ -2,6 +2,7 @@ import { getClassnames } from '@/utils'
 import styles from './Button.module.scss'
 import { ButtonProps } from './Button.types'
 import Typography from '../Typography/Typography'
+import { useMemo } from 'react'
 
 export default function Button({
   size = 'medium',
@@ -9,6 +10,7 @@ export default function Button({
   fullWidth,
   disabled,
   children,
+  icon,
   ...props
 }: ButtonProps) {
   const classnames = getClassnames(
@@ -19,13 +21,21 @@ export default function Button({
     disabled && styles.disabled
   )
 
+  const content = useMemo(() => {
+    if (variant === 'rounded' || variant === 'rounded-outline') {
+      return icon
+    }
+
+    return typeof children === 'string' ? (
+      <Typography>{children}</Typography>
+    ) : (
+      children
+    )
+  }, [variant, icon, children])
+
   return (
     <button className={classnames} {...props}>
-      {typeof children === 'string' ? (
-        <Typography>{children}</Typography>
-      ) : (
-        children
-      )}
+      {content}
     </button>
   )
 }
