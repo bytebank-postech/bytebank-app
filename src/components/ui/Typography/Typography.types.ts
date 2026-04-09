@@ -13,4 +13,5 @@ export type TypographyProps = {
   children: React.ReactNode
   classname?: string
   variant?: Variant
+  color?: 'default' | 'active' | 'white' | 'error'
 }
