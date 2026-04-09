@@ -1,0 +1,59 @@
+@use '@/styles/colors.scss' as *;
+
+.input {
+  border-radius: 8px;
+  border: none;
+  //   cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.8;
+    // cores
+  }
+
+  &.medium {
+    padding: 8px 12px;
+  }
+
+  &.large {
+    padding: 12px 16px;
+  }
+
+  &.fullwidth {
+    width: 100%;
+  }
+
+  &.default {
+    border: 2px solid $primary;
+    color: $primary;
+    &:focus {
+      outline: 2px solid $primary-action;
+    }
+  }
+
+  &.secondary {
+    border: 2px solid $secondary;
+    color: $secondary;
+    &:focus {
+      outline: 2px solid $secondary-action;
+    }
+  }
+
+  &.outline {
+    background-color: $white;
+    border: solid 1px $primary;
+    color: $primary;
+    &:focus {
+      outline: 2px solid $primary-action;
+    }
+  }
+
+  &.ghost {
+    background-color: $tertiary;
+    color: $typography-active;
+    &:focus {
+      outline: 2px solid $tertiary-action;
+    }
+  }
+}

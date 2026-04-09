@@ -1,9 +1,10 @@
 'use client'
 import Action from '@/components/ui/action/action'
-import Input from '@/components/transactions/inputs/input'
+// import Input from '@/components/transactions/inputs/input/input'
 import Select from '@/components/transactions/inputs/select'
 import Menu from '@/components/layout/menu/menu'
 import { Button } from '@/components/ui'
+import { Input } from '@/components/transactions/inputs'
 import Modal from '@/components/ui/modal/modal'
 import Text from '@/components/ui/text/text'
 function openDialog() {
@@ -43,7 +44,7 @@ export default function Home() {
         </Text>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Input
-            inputType="select"
+            type="text"
             placeholder="Selecione o tipo de transação"
           ></Input>
           <Select
@@ -70,7 +71,8 @@ export default function Home() {
             Modal
           </Text>
           <Input
-            inputType="select"
+            id="teste"
+            type="text"
             placeholder="Selecione o tipo de transação"
           ></Input>
           <Select
