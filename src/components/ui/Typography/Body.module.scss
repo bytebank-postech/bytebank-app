@@ -1,0 +1,28 @@
+@use '@/styles/colors.scss' as *;
+
+$body-font: 'Inter';
+
+.body-base {
+  font-family: $body-font;
+  font-weight: 400;
+  white-space: pre-wrap;
+  color: $typography-default;
+}
+
+.body-lg {
+  @extend .body-base;
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.body {
+  @extend .body-base;
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.body-sm {
+  @extend .body-base;
+  font-size: 14px;
+  line-height: 150%;
+}

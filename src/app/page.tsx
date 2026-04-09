@@ -1,12 +1,12 @@
 'use client'
+
 import Action from '@/components/ui/action/action'
-// import Input from '@/components/transactions/inputs/input/input'
-import Select from '@/components/transactions/inputs/select'
 import Menu from '@/components/layout/menu/menu'
-import { Button } from '@/components/ui'
-import { Input } from '@/components/transactions/inputs'
+import { Button, Select, Typography } from '@/components/ui'
 import Modal from '@/components/ui/modal/modal'
 import Text from '@/components/ui/text/text'
+import { Input } from '@/components/transactions/inputs'
+
 function openDialog() {
   const dialog = document.querySelector('dialog')
   dialog?.showModal()
@@ -31,17 +31,13 @@ export default function Home() {
           <Button variant="ghost">Concluir transação</Button>
           <Button variant="outline">Concluir transação</Button>
         </div>
-        <Text size="h2" variant="default" weight="bold">
-          Ações
-        </Text>
+        <Typography variant="title">Ações</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Action action="edit"></Action>
           <Action action="delete"></Action>
           <Action action="more"></Action>
         </div>
-        <Text size="h2" variant="default" weight="bold">
-          Inputs
-        </Text>
+        <Typography variant="title">Inputs</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Input
             type="text"
@@ -56,9 +52,7 @@ export default function Home() {
             ]}
           ></Select>
         </div>
-        <Text size="h2" variant="default" weight="bold">
-          Menu
-        </Text>
+        <Typography variant="title">Menu</Typography>
         <Menu></Menu>
         <Text size="h2" variant="default" weight="bold">
           Modal

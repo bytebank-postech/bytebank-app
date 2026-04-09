@@ -1,0 +1,29 @@
+@use '@/styles/variables.scss' as *;
+@use '@/styles/mixins.scss' as *;
+@use '@/styles/colors.scss' as *;
+
+.select {
+  padding: 8px 12px;
+  border: 1px solid $primary;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #d0d0d0;
+
+    &:hover {
+      border-color: #d0d0d0;
+    }
+  }
+}

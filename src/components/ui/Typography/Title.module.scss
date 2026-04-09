@@ -1,0 +1,28 @@
+@use '@/styles/colors.scss' as *;
+
+$title-font: 'Inter';
+
+.title-base {
+  font-family: $title-font;
+  font-weight: 600;
+  white-space: pre-wrap;
+  color: $typography-default;
+}
+
+.title-lg {
+  @extend .title-base;
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.title {
+  @extend .title-base;
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.title-sm {
+  @extend .title-base;
+  font-size: 14px;
+  line-height: 150%;
+}

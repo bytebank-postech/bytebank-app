@@ -25,7 +25,6 @@
 
   &.default {
     background-color: $primary;
-    color: $white;
 
     &:hover {
       background-color: $primary-action;
@@ -34,7 +33,6 @@
 
   &.secondary {
     background-color: $secondary;
-    color: $white;
 
     &:hover {
       background-color: $secondary-action;
@@ -44,20 +42,30 @@
   &.outline {
     background-color: $white;
     border: solid 1px $primary;
-    color: $primary;
 
     &:hover {
       background-color: $primary;
       color: $white;
     }
+
+    span {
+      color: $primary;
+    }
   }
 
   &.ghost {
     background-color: $tertiary;
-    color: $typography-active;
 
     &:hover {
       background-color: $tertiary-action;
     }
+
+    span {
+      color: $typography-active;
+    }
+  }
+
+  span {
+    color: $white;
   }
 }
