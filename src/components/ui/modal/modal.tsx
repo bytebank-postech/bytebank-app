@@ -1,14 +1,11 @@
-'use client'
 import { IoClose } from 'react-icons/io5'
-import './modal.scss'
+import styles from './Modal.module.scss'
+import { ModalProps } from './Modal.types'
 
-export default function Modal({
-  children,
-  onClose,
-}: Readonly<{ children: React.ReactNode; onClose: () => void }>) {
+export default function Modal({ children, onClose }: ModalProps) {
   return (
-    <dialog>
-      <button type="button" className="close" onClick={onClose}>
+    <dialog className={styles.dialog}>
+      <button type="button" className={styles.close} onClick={onClose}>
         <IoClose />
       </button>
       {children}

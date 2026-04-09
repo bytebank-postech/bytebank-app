@@ -1,11 +1,9 @@
 'use client'
 
-import Action from '@/components/ui/action/action'
-import Menu from '@/components/layout/menu/menu'
-import { Button, Select, Typography } from '@/components/ui'
-import Modal from '@/components/ui/modal/modal'
-import Text from '@/components/ui/text/text'
-import { Input } from '@/components/transactions/inputs'
+import Menu from '@/components/layout/Menu/Menu'
+import { Button, Select, Typography, Input, Modal, Text } from '@/components'
+import { MdDelete, MdEdit } from 'react-icons/md'
+import { TbDots } from 'react-icons/tb'
 
 function openDialog() {
   const dialog = document.querySelector('dialog')
@@ -33,9 +31,9 @@ export default function Home() {
         </div>
         <Typography variant="title">Ações</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <Action action="edit"></Action>
-          <Action action="delete"></Action>
-          <Action action="more"></Action>
+          <Button variant="rounded" icon={<MdEdit size={20} />} />
+          <Button variant="rounded" icon={<MdDelete size={20} />} />
+          <Button variant="rounded-outline" icon={<TbDots size={20} />} />
         </div>
         <Typography variant="title">Inputs</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>

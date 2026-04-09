@@ -1,10 +1,11 @@
-import Avatar from './avatar'
-import './header.scss'
-export default function header() {
+import { Avatar, Typography } from '@/components'
+import style from './Header.module.scss'
+
+export default function Header() {
   return (
-    <header className="header">
-      <div className="content">
-        Joana da Silva Oliveira
+    <header className={style.header}>
+      <div className={style.content}>
+        <Typography>Joana da Silva Oliveira</Typography>
         <Avatar></Avatar>
       </div>
     </header>

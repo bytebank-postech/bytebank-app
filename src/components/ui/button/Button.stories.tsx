@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from '@storybook/nextjs-vite'
 import Button from './Button'
+import { MdEdit } from 'react-icons/md'
 
 const meta = {
   title: 'UI/Button',
@@ -12,23 +13,30 @@ const meta = {
     size: {
       control: 'select',
       options: ['medium', 'large'],
-      description: 'Button size variant',
+      description: 'Tamanho do botão',
     },
     variant: {
       control: 'select',
-      options: ['default', 'secondary', 'ghost', 'outline'],
-      description: 'Button style variant',
+      options: [
+        'default',
+        'secondary',
+        'ghost',
+        'outline',
+        'rounded',
+        'rounded-outline',
+      ],
+      description: 'Estilo do botão',
     },
     fullWidth: {
       control: 'boolean',
-      description: 'Whether button takes full width',
+      description: 'Se o botão ocupa a largura completa',
     },
     disabled: {
       control: 'boolean',
-      description: 'Whether button is disabled',
+      description: 'Se o botão está desabilitado',
     },
     children: {
-      description: 'Button text content',
+      description: 'Conteúdo do botão',
     },
   },
 } satisfies Meta<typeof Button>
@@ -40,28 +48,6 @@ export const Default: Story = {
   args: {
     children: 'Click me',
     size: 'medium',
-    variant: 'default',
-  },
-}
-
-export const Secondary: Story = {
-  args: {
-    children: 'Secondary Button',
-    variant: 'secondary',
-  },
-}
-
-export const Ghost: Story = {
-  args: {
-    children: 'Ghost Button',
-    variant: 'ghost',
-  },
-}
-
-export const Outline: Story = {
-  args: {
-    children: 'Outline Button',
-    variant: 'outline',
   },
 }
 
@@ -86,14 +72,6 @@ export const Disabled: Story = {
   },
 }
 
-export const DisabledSecondary: Story = {
-  args: {
-    children: 'Disabled Secondary',
-    variant: 'secondary',
-    disabled: true,
-  },
-}
-
 export const DefaultWithReactNode: Story = {
   args: {
     children: (
@@ -102,5 +80,12 @@ export const DefaultWithReactNode: Story = {
       </span>
     ),
     variant: 'default',
+  },
+}
+
+export const Rounded: Story = {
+  args: {
+    variant: 'rounded',
+    icon: <MdEdit size={20} />,
   },
 }

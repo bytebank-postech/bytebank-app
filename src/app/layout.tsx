@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.scss'
-import AppHeader from '../components/layout/header/header'
+import AppHeader from '../components/layout/Header/Header'
 
 export const metadata: Metadata = {
   title: 'ByteBank',

@@ -1,5 +1,26 @@
 @use '@/styles/colors.scss' as *;
 
+.button-rounded {
+  border-radius: 50%;
+  line-height: 0;
+
+  &.medium {
+    padding: 8px;
+  }
+
+  &.large {
+    padding: 12px;
+  }
+
+  &:hover {
+    background-color: $primary-action;
+  }
+
+  > * {
+    color: $white;
+  }
+}
+
 .button {
   border-radius: 8px;
   border: none;
@@ -62,6 +83,29 @@
 
     span {
       color: $typography-active;
+    }
+  }
+
+  &.rounded {
+    @extend .button-rounded;
+    background-color: $primary;
+  }
+
+  &.rounded-outline {
+    @extend .button-rounded;
+    background-color: $white;
+    border: solid 2px $primary;
+
+    &:hover {
+      border-color: $primary-action;
+
+      > * {
+        color: $white;
+      }
+    }
+
+    > * {
+      color: $primary;
     }
   }
 

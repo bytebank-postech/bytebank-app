@@ -1,22 +1,21 @@
 import { getClassnames } from '@/utils'
 import styles from './Input.module.scss'
 import { InputProps } from './Input.types'
-// import '../input.scss'
 
 export default function Input({
-  size = 'medium',
+  paddingSize = 'medium',
   variant = 'default',
   fullWidth,
   disabled,
-  children,
   ...props
 }: InputProps) {
   const classnames = getClassnames(
     styles.input,
-    size && styles[size],
+    paddingSize && styles[paddingSize],
     variant && styles[variant],
     fullWidth && styles.fullwidth,
     disabled && styles.disabled
   )
-  return <input className={classnames} {...props}></input>
+
+  return <input className={classnames} disabled={disabled} {...props} />
 }

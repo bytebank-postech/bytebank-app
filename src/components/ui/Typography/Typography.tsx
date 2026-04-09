@@ -1,21 +1,7 @@
 import { getClassnames } from '@/utils'
 import { ElementType } from 'react'
 import style from './Typography.module.scss'
-
-type Variant =
-  | 'body'
-  | 'body-sm'
-  | 'body-lg'
-  | 'title'
-  | 'title-lg'
-  | 'title-sm'
-
-type TypographyProps = {
-  as?: ElementType
-  children: React.ReactNode
-  classname?: string
-  variant?: Variant
-}
+import { TypographyProps, Variant } from './Typography.types'
 
 const componentMap: Record<Variant, ElementType> = {
   body: 'span',
@@ -30,9 +16,14 @@ export default function Typography({
   children,
   classname,
   variant = 'body',
+  color,
 }: TypographyProps) {
   const Component = componentMap[variant]
-  const classnames = getClassnames(classname, style[variant ?? 'body'])
+  const classnames = getClassnames(
+    classname,
+    style[variant ?? 'body'],
+    color && style[`${color}Color`]
+  )
 
   return <Component className={classnames}>{children}</Component>
 }

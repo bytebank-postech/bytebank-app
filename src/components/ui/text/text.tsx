@@ -1,11 +1,6 @@
 import { getClassnames } from '@/utils'
-import styles from './text.module.scss'
-type textProps = {
-  size?: 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-  weight?: 'bold' | 'normal'
-  variant?: 'default' | 'active' | 'secondary' | 'ghost' | 'danger' | 'success'
-  children: React.ReactNode
-}
+import styles from './Text.module.scss'
+import { TextProps } from './Text.types'
 
 export default function Text({
   size = 'p',
@@ -13,7 +8,7 @@ export default function Text({
   weight = 'normal',
   children,
   ...props
-}: Readonly<textProps>) {
+}: Readonly<TextProps>) {
   const classnames = getClassnames(
     styles.text,
     size && styles[size],
