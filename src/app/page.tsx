@@ -1,8 +1,18 @@
+'use client'
 import Action from '@/components/ui/action/action'
 import Input from '@/components/transactions/inputs/input'
 import Select from '@/components/transactions/inputs/select'
 import Menu from '@/components/layout/menu/menu'
 import { Button } from '@/components/ui'
+import Modal from '@/components/ui/modal/modal'
+function openDialog() {
+  const dialog = document.querySelector('dialog')
+  dialog?.showModal()
+}
+function closeDialog() {
+  const dialog = document.querySelector('dialog')
+  dialog?.close()
+}
 export default function Home() {
   return (
     <main>
@@ -38,6 +48,25 @@ export default function Home() {
         </div>
         <h2>Menu</h2>
         <Menu></Menu>
+        <h2>Modal</h2>
+        <Button variant="default" onClick={openDialog}>
+          Abrir modal
+        </Button>
+        <Modal onClose={closeDialog}>
+          <h2>Modal</h2>
+          <Input
+            inputType="select"
+            placeholder="Selecione o tipo de transação"
+          ></Input>
+          <Select
+            placeholder="Selecione o tipo de transação"
+            options={[
+              { value: '01', label: 'Câmbio de Moeda' },
+              { value: '02', label: 'DOC/TED' },
+              { value: '03', label: 'Empréstimo e Financiamento' },
+            ]}
+          ></Select>
+        </Modal>
       </div>
     </main>
   )
