@@ -1,0 +1,16 @@
+import { ElementType } from 'react'
+
+export type Variant =
+  | 'body'
+  | 'body-sm'
+  | 'body-lg'
+  | 'title'
+  | 'title-lg'
+  | 'title-sm'
+
+export type TypographyProps = {
+  as?: ElementType
+  children: React.ReactNode
+  classname?: string
+  variant?: Variant
+}
