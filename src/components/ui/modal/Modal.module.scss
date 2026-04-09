@@ -1,6 +1,6 @@
 @use '@/styles/variables.scss' as *;
 
-dialog {
+.dialog {
   min-width: 50vw;
   height: 75vh;
   padding: 2rem;
@@ -61,10 +61,7 @@ dialog {
       opacity: 0.8;
     }
   }
-}
-
-@media (max-width: 768px) {
-  dialog {
+  @media (max-width: 768px) {
     min-width: 90vw;
     background-image: url('../../../assets/images/modal.png');
   }
