@@ -1,10 +1,8 @@
 'use client'
 
 import Action from '@/components/ui/action/action'
-import Menu from '@/components/layout/menu/menu'
-import { Button, Select, Typography, Input } from '@/components/ui'
-import Modal from '@/components/ui/modal/modal'
-import Text from '@/components/ui/text/text'
+import Menu from '@/components/layout/Menu/Menu'
+import { Button, Select, Typography, Input, Modal, Text } from '@/components'
 
 function openDialog() {
   const dialog = document.querySelector('dialog')

@@ -1,6 +1,6 @@
-@use '../../../styles/variables.scss' as vars;
+@use '@/styles/variables.scss' as vars;
+
 .avatar {
-  //  background-color: vars.$color-blue;
   color: vars.$color-orange;
   padding: vars.$avatar-padding;
   border-radius: vars.$avatar-radius;
