@@ -1,0 +1,12 @@
+@use '@/styles/colors' as *;
+
+.transactionItem {
+  padding: 1rem;
+
+  &.income {
+    background-color: green;
+  }
+  &.outcome {
+    background-color: red;
+  }
+}
