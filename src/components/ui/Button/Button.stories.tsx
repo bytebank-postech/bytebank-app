@@ -46,28 +46,28 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    children: 'Click me',
+    children: 'Botão default',
     size: 'medium',
   },
 }
 
 export const Large: Story = {
   args: {
-    children: 'Large Button',
+    children: 'Botão large',
     size: 'large',
   },
 }
 
 export const FullWidth: Story = {
   args: {
-    children: 'Full Width Button',
+    children: 'Botão de largura completa',
     fullWidth: true,
   },
 }
 
 export const Disabled: Story = {
   args: {
-    children: 'Disabled Button',
+    children: 'Botão desabilitado',
     disabled: true,
   },
 }
@@ -76,7 +76,7 @@ export const DefaultWithReactNode: Story = {
   args: {
     children: (
       <span>
-        Default with <strong>ReactNode</strong>
+        Botão default com <strong>ReactNode</strong>
       </span>
     ),
     variant: 'default',

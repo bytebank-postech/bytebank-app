@@ -10,15 +10,15 @@ const meta = {
   tags: ['autodocs'],
   argTypes: {
     options: {
-      description: 'Array of options available in the select',
+      description: 'Array de opções do select',
     },
     placeholder: {
       control: 'text',
-      description: 'Placeholder text',
+      description: 'Texto do placeholder',
     },
     disabled: {
       control: 'boolean',
-      description: 'Whether select is disabled',
+      description: 'Se o select está desabilitado',
     },
   },
 } satisfies Meta<typeof Select>
@@ -51,10 +51,10 @@ export const Disabled: Story = {
 export const Categories: Story = {
   args: {
     options: [
-      { label: 'Transferência', value: 'transfer' },
-      { label: 'Pagamento', value: 'payment' },
-      { label: 'Depósito', value: 'deposit' },
-      { label: 'Saque', value: 'withdrawal' },
+      { label: 'Transferência', value: 'transferencia' },
+      { label: 'Pagamento', value: 'pagamento' },
+      { label: 'Depósito', value: 'deposito' },
+      { label: 'Saque', value: 'saque' },
     ],
     placeholder: 'Selecione a categoria...',
   },
@@ -63,9 +63,9 @@ export const Categories: Story = {
 export const AccountTypes: Story = {
   args: {
     options: [
-      { label: 'Conta Corrente', value: 'checking' },
-      { label: 'Conta Poupança', value: 'savings' },
-      { label: 'Conta Investimento', value: 'investment' },
+      { label: 'Conta Corrente', value: 'conta_corrente' },
+      { label: 'Conta Poupança', value: 'conta_poupanca' },
+      { label: 'Conta Investimento', value: 'conta_investimento' },
     ],
     placeholder: 'Tipo de conta...',
   },
