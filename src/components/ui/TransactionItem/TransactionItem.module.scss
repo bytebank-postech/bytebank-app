@@ -2,11 +2,31 @@
 
 .transactionItem {
   padding: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  display: flex;
+  // border-bottom: 1px solid $primary-ghost;
+  & > div {
+    width: 100%;
+  }
+  &:not(:last-child) {
+    border-bottom: 2px solid $primary-ghost;
+  }
 
   &.income {
-    background-color: green;
+    color: $success;
   }
   &.outcome {
-    background-color: red;
+    color: $secondary;
+  }
+
+  & > div > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  & span {
+    display: block;
   }
 }

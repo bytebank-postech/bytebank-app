@@ -1,6 +1,7 @@
 import { getClassnames } from '@/utils'
 import styles from './TransactionItem.module.scss'
 import { TransactionItemProps } from './TransactionItem.types'
+import { Typography } from '../index'
 export default function TransactionItem({
   type,
   name,
@@ -13,10 +14,29 @@ export default function TransactionItem({
   )
   return (
     <div className={classNames}>
-      <p>{type}</p>
-      <p>{name}</p>
-      <p>{amount}</p>
-      <p>{date}</p>
+      <div>
+        <Typography variant="body-sm" color="active">
+          {type}
+        </Typography>
+        <div>
+          <Typography variant="body-lg" color="active">
+            {name}
+          </Typography>
+          <Typography variant="body-sm" color="active">
+            {date}
+          </Typography>
+        </div>
+        <Typography
+          variant="body-lg"
+          color={amount < 0 ? 'error' : 'active'}
+          weight="bold"
+        >
+          {amount.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          })}
+        </Typography>
+      </div>
     </div>
   )
 }
