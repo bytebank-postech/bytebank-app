@@ -1,0 +1,19 @@
+@use '@/styles/variables.scss' as vars;
+
+.menu-item {
+  list-style-type: none;
+  color: vars.$color-blue;
+  display: flex;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid vars.$color-blue;
+  }
+
+  & > a {
+    text-align: center;
+    width: 100%;
+    padding: vars.$button-padding;
+    text-decoration: none;
+    color: vars.$color-blue;
+  }
+}

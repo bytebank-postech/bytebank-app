@@ -1,29 +1,52 @@
-import Button from '@/components/ui/button/button'
-import Action from '@/components/ui/action/action'
-import Input from '@/components/transactions/inputs/input'
-import Select from '@/components/transactions/inputs/select'
-import Menu from '@/components/layout/menu/menu'
+'use client'
+
+import Menu from '@/components/layout/Menu/Menu'
+import {
+  Button,
+  Select,
+  Typography,
+  Input,
+  Modal,
+  Text,
+  TransactionItem,
+} from '@/components'
+import { MdDelete, MdEdit } from 'react-icons/md'
+import { TbDots } from 'react-icons/tb'
+
+function openDialog() {
+  const dialog = document.querySelector('dialog')
+  dialog?.showModal()
+}
+function closeDialog() {
+  const dialog = document.querySelector('dialog')
+  dialog?.close()
+}
 export default function Home() {
   return (
     <main>
-      <h1>Home</h1>
+      <Text size="h1" variant="default" weight="bold">
+        Home
+      </Text>
       <div>
-        <h2>Botões</h2>
+        <Text size="h2" variant="default" weight="bold">
+          Botões
+        </Text>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <Button btnClass="primary">Concluir transação</Button>
-          <Button btnClass="secondary">Concluir transação</Button>
-          <Button btnClass="highlight">Concluir transação</Button>
+          <Button variant="default">Concluir transação</Button>
+          <Button variant="secondary">Concluir transação</Button>
+          <Button variant="ghost">Concluir transação</Button>
+          <Button variant="outline">Concluir transação</Button>
         </div>
-        <h2>Ações</h2>
+        <Typography variant="title">Ações</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <Action action="edit"></Action>
-          <Action action="delete"></Action>
-          <Action action="more"></Action>
+          <Button variant="rounded" icon={<MdEdit size={20} />} />
+          <Button variant="rounded" icon={<MdDelete size={20} />} />
+          <Button variant="rounded-outline" icon={<TbDots size={20} />} />
         </div>
-        <h2>Inputs</h2>
+        <Typography variant="title">Inputs</Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <Input
-            inputType="select"
+            type="text"
             placeholder="Selecione o tipo de transação"
           ></Input>
           <Select
@@ -35,8 +58,55 @@ export default function Home() {
             ]}
           ></Select>
         </div>
-        <h2>Menu</h2>
+        <Typography variant="title">Menu</Typography>
         <Menu></Menu>
+        <Text size="h2" variant="default" weight="bold">
+          Modal
+        </Text>
+        <Button variant="default" onClick={openDialog}>
+          Abrir modal
+        </Button>
+        <Modal onClose={closeDialog}>
+          <Text size="h2" variant="default" weight="bold">
+            Modal
+          </Text>
+          <Input
+            id="teste"
+            type="text"
+            placeholder="Selecione o tipo de transação"
+          ></Input>
+          <Select
+            placeholder="Selecione o tipo de transação"
+            options={[
+              { value: '01', label: 'Câmbio de Moeda' },
+              { value: '02', label: 'DOC/TED' },
+              { value: '03', label: 'Empréstimo e Financiamento' },
+            ]}
+          ></Select>
+        </Modal>
+        <Text size="h2" variant="default" weight="bold">
+          Text
+        </Text>
+        <Text size="p" variant="default">
+          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Rem optio
+          iure inventore quis, recusandae natus a autem culpa! Eos molestias
+          ipsum error vel ratione ab saepe, nostrum molestiae architecto cum?
+        </Text>
+        <Text size="h2" variant="default" weight="bold">
+          TransactionItem
+        </Text>
+        <TransactionItem
+          name="Câmbio de Moeda"
+          date="20/05/2023"
+          amount={100}
+          type="Depósito"
+        ></TransactionItem>
+        <TransactionItem
+          name="Compra"
+          date="20/05/2023"
+          amount={-100}
+          type="Pagamento"
+        ></TransactionItem>
       </div>
     </main>
   )
