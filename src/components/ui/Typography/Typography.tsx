@@ -16,13 +16,15 @@ export default function Typography({
   children,
   classname,
   variant = 'body',
+  weight = 'normal',
   color,
 }: TypographyProps) {
   const Component = componentMap[variant]
   const classnames = getClassnames(
     classname,
     style[variant ?? 'body'],
-    color && style[`${color}Color`]
+    color && style[`${color}Color`],
+    style[weight]
   )
 
   return <Component className={classnames}>{children}</Component>

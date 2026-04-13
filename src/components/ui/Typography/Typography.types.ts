@@ -14,4 +14,5 @@ export type TypographyProps = {
   classname?: string
   variant?: Variant
   color?: 'default' | 'active' | 'white' | 'error'
+  weight?: 'normal' | 'bold'
 }

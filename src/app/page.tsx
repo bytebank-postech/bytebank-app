@@ -1,7 +1,15 @@
 'use client'
 
 import Menu from '@/components/layout/Menu/Menu'
-import { Button, Select, Typography, Input, Modal, Text } from '@/components'
+import {
+  Button,
+  Select,
+  Typography,
+  Input,
+  Modal,
+  Text,
+  TransactionItem,
+} from '@/components'
 import { MdDelete, MdEdit } from 'react-icons/md'
 import { TbDots } from 'react-icons/tb'
 
@@ -84,6 +92,21 @@ export default function Home() {
           iure inventore quis, recusandae natus a autem culpa! Eos molestias
           ipsum error vel ratione ab saepe, nostrum molestiae architecto cum?
         </Text>
+        <Text size="h2" variant="default" weight="bold">
+          TransactionItem
+        </Text>
+        <TransactionItem
+          name="Câmbio de Moeda"
+          date="20/05/2023"
+          amount={100}
+          type="Depósito"
+        ></TransactionItem>
+        <TransactionItem
+          name="Compra"
+          date="20/05/2023"
+          amount={-100}
+          type="Pagamento"
+        ></TransactionItem>
       </div>
     </main>
   )
