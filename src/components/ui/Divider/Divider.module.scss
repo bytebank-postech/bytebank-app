@@ -1,0 +1,50 @@
+@use '@/styles/colors' as *;
+
+.divider {
+  background-color: $white;
+  display: block;
+
+  &.horizontal {
+    width: 100%;
+
+    &.fino {
+      height: 1px;
+    }
+
+    &.medio {
+      height: 2px;
+    }
+
+    &.grosso {
+      height: 4px;
+    }
+  }
+
+  &.vertical {
+    height: 100%;
+
+    &.fino {
+      width: 1px;
+    }
+
+    &.medio {
+      width: 2px;
+    }
+
+    &.grosso {
+      width: 4px;
+    }
+  }
+
+  &.primary {
+    background-color: $primary;
+  }
+
+  &.secondary {
+    background-color: $secondary;
+  }
+
+  &.gray {
+    background-color: $gray;
+  }
+}

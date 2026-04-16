@@ -1,0 +1,24 @@
+@use '@/styles/colors.scss' as *;
+@use './Body.module.scss' as *;
+@use './Title.module.scss' as *;
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-regular.ttf') format('truetype');
+}
+
+.activeColor {
+  color: $typography-active;
+}
+
+.whiteColor {
+  color: $typography-secondary;
+}
+
+.errorColor {
+  color: $typography-error;
+}
+
+.bold {
+  font-weight: 600;
+}

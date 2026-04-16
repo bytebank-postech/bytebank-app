@@ -1,8 +1,17 @@
-@import '../styles/variables';
-@import '../styles/mixins';
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+body {
+  background-color: $color-green;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
