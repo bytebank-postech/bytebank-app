@@ -4,6 +4,7 @@ export type Variant =
   | 'body'
   | 'body-sm'
   | 'body-lg'
+  | 'body-bold'
   | 'title'
   | 'title-lg'
   | 'title-sm'

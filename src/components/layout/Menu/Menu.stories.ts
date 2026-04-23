@@ -8,9 +8,25 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    currentPath: {
+      control: 'text',
+      description: 'Current path',
+    },
+  },
 } satisfies Meta<typeof Menu>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {}
+export const Default: Story = {
+  args: {
+    currentPath: '/',
+  },
+}
+
+export const TransacoesAtiva: Story = {
+  args: {
+    currentPath: '/transactions',
+  },
+}

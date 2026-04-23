@@ -5,6 +5,7 @@ import { TypographyProps, Variant } from './Typography.types'
 
 const componentMap: Record<Variant, ElementType> = {
   body: 'span',
+  'body-bold': 'strong',
   'body-sm': 'span',
   'body-lg': 'span',
   'title-lg': 'h1',

@@ -9,12 +9,14 @@ export default function Button({
   variant = 'default',
   fullWidth,
   disabled,
+  className,
   children,
   icon,
   ...props
 }: ButtonProps) {
   const classnames = getClassnames(
     styles.button,
+    className,
     size && styles[size],
     variant && styles[variant],
     fullWidth && styles.fullwidth,
@@ -34,7 +36,7 @@ export default function Button({
   }, [variant, icon, children])
 
   return (
-    <button className={classnames} {...props}>
+    <button {...props} disabled={disabled} className={classnames}>
       {content}
     </button>
   )

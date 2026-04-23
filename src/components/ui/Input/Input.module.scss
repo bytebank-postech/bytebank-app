@@ -3,7 +3,17 @@
 .input {
   border-radius: 8px;
   border: none;
-  font-family: 'Inter';
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+
+  &::placeholder {
+    color: $typography-placeholder;
+    opacity: 1;
+    font: inherit;
+    font-style: normal;
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -27,7 +37,7 @@
     border: 2px solid $primary;
     color: $primary;
     &:focus {
-      outline: 2px solid $primary-action;
+      outline: none;
     }
   }
 
@@ -35,7 +45,7 @@
     border: 2px solid $secondary;
     color: $secondary;
     &:focus {
-      outline: 2px solid $secondary-action;
+      outline: none;
     }
   }
 
@@ -44,7 +54,7 @@
     border: solid 1px $primary;
     color: $primary;
     &:focus {
-      outline: 2px solid $primary-action;
+      outline: none;
     }
   }
 
@@ -52,7 +62,7 @@
     background-color: $tertiary;
     color: $typography-active;
     &:focus {
-      outline: 2px solid $tertiary-action;
+      outline: none;
     }
   }
 }

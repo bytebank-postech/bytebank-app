@@ -1,4 +1,4 @@
-import { SelectHTMLAttributes, DetailedHTMLProps } from 'react'
+import { DetailedHTMLProps, HTMLAttributes } from 'react'
 
 export type Option = {
   label: string
@@ -9,7 +9,10 @@ export type SelectProps = {
   options: Option[]
   placeholder?: string
   disabled?: boolean
-} & DetailedHTMLProps<
-  SelectHTMLAttributes<HTMLSelectElement>,
-  HTMLSelectElement
+  value?: string
+  defaultValue?: string
+  onChange?: (value: string) => void
+} & Omit<
+  DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>,
+  'onChange'
 >

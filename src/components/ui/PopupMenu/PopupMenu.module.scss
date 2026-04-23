@@ -1,0 +1,59 @@
+@use '@/styles/colors.scss' as *;
+
+.root {
+  position: relative;
+  display: inline-flex;
+}
+
+.kebab {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 0;
+  color: rgba(2, 77, 96, 0.95);
+}
+
+.kebab:hover {
+  color: rgba(2, 77, 96, 1);
+}
+
+.kebab:active {
+  transform: translateY(0.5px);
+}
+
+.menu {
+  position: absolute;
+  top: 32px;
+  min-width: 160px;
+  background-color: $white;
+  border: 1px solid rgba(0, 77, 97, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 30;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.right {
+  right: 0;
+}
+
+.left {
+  left: 0;
+}
+
+.item {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: $typography-active;
+}
+
+.item:hover {
+  background-color: #dce7e8;
+}

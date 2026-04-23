@@ -9,6 +9,11 @@ $body-font: 'Inter';
   color: $typography-default;
 }
 
+.body-bold {
+  @extend .body-base;
+  font-weight: 700;
+}
+
 .body-lg {
   @extend .body-base;
   font-size: 20px;

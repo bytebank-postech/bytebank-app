@@ -7,15 +7,17 @@ export default function Input({
   variant = 'default',
   fullWidth,
   disabled,
+  className,
   ...props
 }: InputProps) {
   const classnames = getClassnames(
     styles.input,
+    className,
     paddingSize && styles[paddingSize],
     variant && styles[variant],
     fullWidth && styles.fullwidth,
     disabled && styles.disabled
   )
 
-  return <input className={classnames} disabled={disabled} {...props} />
+  return <input {...props} disabled={disabled} className={classnames} />
 }

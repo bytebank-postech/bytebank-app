@@ -5,7 +5,7 @@ export default function Header() {
   return (
     <header className={style.header}>
       <div className={style.content}>
-        <Typography>Joana da Silva Oliveira</Typography>
+        <Typography color="white">Joana da Silva Oliveira</Typography>
         <Avatar></Avatar>
       </div>
     </header>

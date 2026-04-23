@@ -41,6 +41,13 @@ export const BodyLarge: Story = {
   },
 }
 
+export const BodyBold: Story = {
+  args: {
+    variant: 'body-bold',
+    children: 'Body text bold',
+  },
+}
+
 export const Body: Story = {
   args: {
     variant: 'body',
