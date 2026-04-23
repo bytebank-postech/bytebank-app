@@ -1,0 +1,270 @@
+@use '@/styles/variables.scss' as vars;
+@use '@/styles/colors.scss' as *;
+
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px 20px 40px;
+  display: grid;
+  grid-template-columns: minmax(160px, 200px) minmax(0, 1fr) minmax(
+      260px,
+      320px
+    );
+  grid-template-rows: auto auto;
+  gap: 24px;
+  align-items: start;
+}
+
+.sidebar {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  height: calc(100vh - 64px);
+}
+
+.mainStack {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.extratoColumn {
+  grid-column: 3;
+  grid-row: 1 / -1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+
+  & > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.welcome {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 24px;
+}
+
+.welcomeLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dateMuted {
+  opacity: 0.88;
+}
+
+.welcomeRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.balanceHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.saldoLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: vars.$color-white;
+}
+
+.saldoIcon {
+  color: vars.$color-orange;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #fff;
+  line-height: 0;
+  border-radius: vars.$avatar-radius;
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+.saldoAccent {
+  width: 100%;
+  max-width: 160px;
+  height: 2px;
+  background-color: vars.$color-orange;
+  margin-top: 2px;
+}
+
+.formCard {
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    width: 178px;
+    height: 180px;
+    background-repeat: no-repeat;
+    z-index: 0;
+  }
+
+  &::before {
+    top: 0;
+    right: 0;
+    background-image: url('../assets/images/Pixels3.svg');
+    background-position: top right;
+  }
+
+  &::after {
+    bottom: 0;
+    left: 0;
+    background-image: url('../assets/images/Pixels4.svg');
+    background-position: bottom left;
+  }
+}
+
+.formInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.formTitle {
+  margin-bottom: 4px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labelMuted {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.selectFull {
+  max-width: 100%;
+}
+
+.formSelect {
+  width: 320px;
+  max-width: 100%;
+}
+
+.formDescriptionInput {
+  width: 320px;
+  max-width: 100%;
+}
+
+.formValueInput {
+  width: 180px;
+  max-width: 100%;
+}
+
+.formError {
+  margin-top: -4px;
+}
+
+.formSubmit {
+  width: 220px;
+  max-width: 100%;
+}
+
+.extrato {
+  padding: 20px 24px 24px;
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.extratoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.extratoActions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.monthBlock {
+  margin-bottom: 8px;
+
+  &:not(:first-of-type) {
+    margin-top: 20px;
+  }
+}
+
+.monthTitle {
+  margin-bottom: 4px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.seeMoreWrapper {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.seeMoreLink {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+  color: rgba(2, 77, 96, 0.75);
+  text-decoration: none;
+  padding: 8px 0;
+
+  &:hover {
+    color: rgba(2, 77, 96, 1);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(2, 77, 96, 0.65);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
