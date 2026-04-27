@@ -11,6 +11,7 @@ import {
   Input,
   Paper,
   TransactionItem,
+  Modal,
 } from '@/components'
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import type { Transaction, TransactionType } from '@/types/transaction'
@@ -19,7 +20,11 @@ import {
   groupTransactionsByMonth,
   totalBalance,
 } from '@/app/transactions/model'
-import { createTransaction, getTransactions } from '@/services/transactions'
+import {
+  createTransaction,
+  getTransactions,
+  updateTransaction,
+} from '@/services/transactions'
 import styles from './page.module.scss'
 
 const transactionFormOptions: { value: TransactionType; label: string }[] = (
@@ -66,6 +71,88 @@ export default function Home() {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  // Estado do modal (edit form)
+  const [editFormType, setEditFormType] = useState<TransactionType | ''>('')
+  const [editFormDescription, setEditFormDescription] = useState('')
+  const [editFormAmount, setEditFormAmount] = useState('')
+
+  function openEditModal(t: Transaction) {
+    // Guarda a transação que será editada
+    setEditingTransaction(t)
+
+    // Preenche os campos do *modal* apenas
+    setEditFormType(t.type)
+    setEditFormDescription(t.name)
+    const formatted = Math.abs(t.amount).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    setEditFormAmount(formatted)
+
+    setIsEditModalOpen(true)
+  }
+
+  async function handleEditTransaction(e: React.SubmitEvent) {
+    e.preventDefault()
+    setEditError(null)
+
+    if (!editingTransaction) return
+
+    if (!editFormType) {
+      setEditError('Selecione o tipo de transação.')
+      return
+    }
+
+    const name = editFormDescription.trim()
+    if (!name) {
+      setEditError('Informe uma descrição.')
+      return
+    }
+    const parsed = parseBRLAmount(editFormAmount)
+    if (parsed === null || parsed === 0) {
+      setEditError('Informe um valor válido.')
+      return
+    }
+
+    const payload: Transaction = {
+      id: editingTransaction.id,
+      type: editFormType,
+      name,
+      amount: amountForType(editFormType, parsed),
+      date: editingTransaction.date,
+    }
+
+    setEditLoading(true)
+    try {
+      const updated = await updateTransaction(editingTransaction.id, payload)
+
+      // Atualiza o array localmente
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === updated.id ? updated : t))
+      )
+
+      // Fecha modal e limpa campos de edição
+      setIsEditModalOpen(false)
+      setEditingTransaction(null)
+      setEditFormType('')
+      setEditFormDescription('')
+      setEditFormAmount('')
+    } catch (err: unknown) {
+      setEditError(
+        err instanceof Error ? err.message : 'Não foi possível concluir.'
+      )
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
     setLoadState('loading')
@@ -100,7 +187,7 @@ export default function Home() {
     ? balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     : 'R$ ••••••'
 
-  async function handleNewTransaction(e: React.FormEvent) {
+  async function handleNewTransaction(e: React.SubmitEvent) {
     e.preventDefault()
     setSubmitError(null)
     if (!formType) {
@@ -252,6 +339,84 @@ export default function Home() {
             </Button>
           </form>
         </Paper>
+
+        {isEditModalOpen && editingTransaction && (
+          <Modal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+          >
+            <form className={styles.formInner} onSubmit={handleEditTransaction}>
+              <Typography
+                variant="title-lg"
+                color="white"
+                weight="bold"
+                classname={styles.formTitle}
+              >
+                Editar transação
+              </Typography>
+
+              <div className={styles.fieldGroup}>
+                <span className={styles.labelMuted}>Tipo de transação:</span>
+                <Select
+                  className={`${styles.selectFull} ${styles.formSelect}`}
+                  placeholder="Selecione o tipo de transação"
+                  options={transactionFormOptions}
+                  value={editFormType}
+                  onChange={(v) => setEditFormType(v as TransactionType)}
+                  disabled={editLoading}
+                />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <span className={styles.labelMuted}>Descrição:</span>
+                <Input
+                  paddingSize="large"
+                  type="text"
+                  placeholder="Ex.: Aluguel, presente, salário…"
+                  className={styles.formDescriptionInput}
+                  value={editFormDescription}
+                  onChange={(e) => setEditFormDescription(e.target.value)}
+                  disabled={editLoading}
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <span className={styles.labelMuted}>Valor:</span>
+                <Input
+                  paddingSize="large"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="00,00"
+                  className={styles.formValueInput}
+                  value={editFormAmount}
+                  onChange={(e) => setEditFormAmount(e.target.value)}
+                  disabled={editLoading}
+                />
+              </div>
+
+              {editError && (
+                <Typography
+                  variant="body-sm"
+                  color="error"
+                  classname={styles.formError}
+                >
+                  {editError}
+                </Typography>
+              )}
+
+              <Button
+                type="submit"
+                variant="default"
+                size="large"
+                className={styles.formSubmit}
+                disabled={editLoading}
+              >
+                {editLoading ? 'Atualizando…' : 'Salvar alterações'}
+              </Button>
+            </form>
+          </Modal>
+        )}
       </div>
 
       <div className={styles.extratoColumn}>
@@ -296,7 +461,11 @@ export default function Home() {
                     name={t.name}
                     menuPlacement="home-stacked-date"
                     menuItems={[
-                      { id: 'edit', label: 'Editar', onClick: () => {} },
+                      {
+                        id: 'edit',
+                        label: 'Editar',
+                        onClick: () => openEditModal(t),
+                      },
                       { id: 'delete', label: 'Excluir', onClick: () => {} },
                     ]}
                   />
