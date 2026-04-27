@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.scss'
+import AppHeader from '../components/layout/Header/Header'
 
 export const metadata: Metadata = {
   title: 'ByteBank',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <AppHeader></AppHeader>
+        {children}
+      </body>
     </html>
   )
 }

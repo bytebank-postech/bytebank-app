@@ -1,0 +1,19 @@
+@use '@/styles/variables.scss' as vars;
+
+.header {
+  display: flex;
+  justify-content: center;
+  background-color: vars.$color-blue;
+  padding: vars.$header-padding;
+}
+
+.content {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  color: vars.$color-white;
+}

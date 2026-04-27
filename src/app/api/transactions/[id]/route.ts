@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
-import transactionsData from '@/data/transactions.json'
-import { Transaction } from '@/types/transaction'
+import { transactions } from '@/data/inmemory'
 
-let data: Transaction[] = transactionsData as Transaction[]
-
-type Params = { params: { id: string } }
+type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_request: Request, { params }: Params) {
-  const transaction = data.find((t) => t.id === params.id)
+  const { id } = await params
+  const transaction = transactions.find((t) => t.id === id)
   if (!transaction) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
@@ -15,13 +13,29 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 export async function PUT(request: Request, { params }: Params) {
+  const { id } = await params
   const body = await request.json()
-  data = data.map((t) => (t.id === params.id ? { ...t, ...body } : t))
-  const updated = data.find((t) => t.id === params.id)
+
+  const index = transactions.findIndex((t) => t.id === id)
+
+  if (index !== -1) {
+    transactions[index] = body
+  } else {
+    return NextResponse.json({ error: 'not found' }, { status: 404 })
+  }
+
+  const updated = transactions.find((t) => t.id === id)
+  console.debug(`content: ${updated}`)
   return NextResponse.json(updated)
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
-  data = data.filter((t) => t.id !== params.id)
+  const { id } = await params
+  const index = transactions.findIndex((t) => t.id === id)
+
+  if (index !== -1) {
+    transactions.splice(index, 1)
+  }
+
   return NextResponse.json({ message: 'Deleted' })
 }
