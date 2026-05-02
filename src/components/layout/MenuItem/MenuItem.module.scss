@@ -1,0 +1,30 @@
+@use '@/styles/variables.scss' as vars;
+
+.menu-item {
+  list-style-type: none;
+  color: vars.$color-blue;
+  display: flex;
+  padding: 0;
+  position: relative;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 62%;
+    height: 1px;
+    background-color: rgba(0, 77, 97, 0.35);
+  }
+}
+
+.link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 12px 24px;
+  text-decoration: none;
+  color: vars.$color-blue;
+}

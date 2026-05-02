@@ -15,24 +15,28 @@ Aplicação de gerenciamento financeiro desenvolvida como Tech Challenge Fase 01
 ## Como rodar
 
 1. Clone o repositório
-   \`\`\`bash
+
+   ```bash
    git clone https://github.com/bytebank-postech/bytebank-app.git
-   \`\`\`
+   ```
 
 2. Instale as dependências
-   \`\`\`bash
+
+   ```bash
    npm install
-   \`\`\`
+   ```
 
 3. Rode o projeto
-   \`\`\`bash
+
+   ```bash
    npm run dev
-   \`\`\`
+   ```
 
 4. Acesse no navegador
-   \`\`\`
+
+   ```
    http://localhost:3000
-   \`\`\`
+   ```
 
 ## API
 
@@ -46,43 +50,51 @@ A aplicação possui uma API fake com as seguintes rotas:
 | PUT    | /api/transactions/[id] | Edita uma transação        |
 | DELETE | /api/transactions/[id] | Exclui uma transação       |
 
-## Services
+## Módulo de transações (front)
 
-Funções prontas pra consumir a API em `src/services/transactions.ts`:
+**Cliente HTTP** — `src/services/transactions.ts` (comunicação com `/api/transactions`):
 
-| Função                        | Tipo   | Descrição                  |
-| ----------------------------- | ------ | -------------------------- |
-| `getTransactions()`           | Server | Lista todas as transações  |
-| `getTransactionById(id)`      | Server | Busca uma transação por id |
-| `createTransaction(data)`     | Client | Cria uma nova transação    |
-| `updateTransaction(id, data)` | Client | Edita uma transação        |
-| `deleteTransaction(id)`       | Client | Exclui uma transação       |
+| Função                        | Descrição                  |
+| ----------------------------- | -------------------------- |
+| `getTransactions()`           | Lista todas as transações  |
+| `getTransactionById(id)`      | Busca uma transação por id |
+| `createTransaction(data)`     | Cria uma nova transação    |
+| `updateTransaction(id, data)` | Edita uma transação        |
+| `deleteTransaction(id)`       | Exclui uma transação       |
+
+**Helpers de domínio/UI** — `src/app/transactions/model.ts` (formatação e agregação usadas na home e na listagem):
+
+| Função / tipo                | Descrição                  |
+| ---------------------------- | -------------------------- |
+| `totalBalance()`             | Soma dos valores (saldo)   |
+| `formatDisplayDate()`        | Data para exibição (pt-BR) |
+| `groupTransactionsByMonth()` | Agrupa transações por mês  |
+| `MonthGroup`                 | Tipo do agrupamento mensal |
 
 ## Estrutura do projeto
 
 ```
-C:\bytebank-app
+bytebank-app/
 ├── public/
 ├── src/
-|  ├── app/
-|  |  ├── api/               # API Routes
-|  |  ├── globals.scss
-|  |  ├── layout.tsx
-|  |  ├── page.tsx
-|  |  └── transactions/      # Página de listagem e detalhes
-|  ├── components/
-|  |  ├── layout/            # Header, Footer
-|  |  ├── transactions/      # Componentes de transação
-|  |  └── ui/                # Componentes genéricos
-|  ├── data/
-|  |  └── transactions.json  # Mock de dados
-|  ├── services/
-|  |  └── transactions.ts    # Funções de acesso à API
-|  ├── styles/
-|  |  ├── mixins.scss        # Mixins de responsividade
-|  |  └── variables.scss     # Variáveis globais
-|  └── types/
-|     └── transaction.ts     # Tipagem
+│   ├── app/
+│   │   ├── api/                 # API Routes
+│   │   ├── globals.scss
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── transactions/        # Páginas /transactions, model.ts (helpers)
+│   ├── components/
+│   │   ├── layout/              # Menu, Header
+│   │   └── ui/                  # Design system (Button, TransactionItem, …)
+│   ├── data/
+│   │   └── transactions.json    # Mock de dados
+│   ├── services/
+│   │   └── transactions.ts      # Cliente HTTP da API de transações
+│   ├── styles/
+│   │   ├── mixins.scss          # Mixins de responsividade
+│   │   └── variables.scss       # Variáveis globais
+│   └── types/
+│       └── transaction.ts       # Tipagem
 ├── next.config.ts
 ├── package.json
 └── tsconfig.json

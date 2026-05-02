@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import transactionsData from '@/data/transactions.json'
 import { Transaction } from '@/types/transaction'
 
-let data: Transaction[] = transactionsData as Transaction[]
+import { transactions } from '@/data/inmemory'
 
 export async function GET() {
-  return NextResponse.json(data)
+  return NextResponse.json(transactions)
 }
 
 export async function POST(request: Request) {
@@ -14,6 +13,6 @@ export async function POST(request: Request) {
     ...body,
     id: crypto.randomUUID(),
   }
-  data = [newTransaction, ...data]
+  transactions.push(newTransaction)
   return NextResponse.json(newTransaction, { status: 201 })
 }
