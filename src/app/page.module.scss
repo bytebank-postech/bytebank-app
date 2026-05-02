@@ -268,3 +268,84 @@
     border-radius: 6px;
   }
 }
+
+/* Responsividade */
+@media (max-width: 1000px) {
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .mainStack {
+    grid-column: 1;
+    order: 1;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .extratoColumn {
+    grid-column: 1;
+    order: 3;
+    width: 100%;
+  }
+
+  .welcome {
+    padding: 16px;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .welcomeRight {
+    min-width: 0;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .formCard {
+    padding: 16px;
+    width: 100%;
+  }
+
+  .formInner {
+    gap: 16px;
+  }
+
+  .formSelect,
+  .formDescriptionInput {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .formValueInput {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .formSubmit {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .welcomeLeft {
+    gap: 6px;
+  }
+
+  .saldoLabel {
+    font-size: 14px;
+  }
+
+  .seeMoreLink {
+    padding: 6px 0;
+  }
+}

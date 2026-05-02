@@ -24,8 +24,10 @@ import {
   createTransaction,
   getTransactions,
   updateTransaction,
+  deleteTransaction,
 } from '@/services/transactions'
 import styles from './page.module.scss'
+import EditTransactionModal from '@/components/EditTransactionModal/EditTransactionModal'
 
 const transactionFormOptions: { value: TransactionType; label: string }[] = (
   [
@@ -37,11 +39,29 @@ const transactionFormOptions: { value: TransactionType; label: string }[] = (
 ).map((value) => ({ value, label: value }))
 
 function parseBRLAmount(raw: string): number | null {
-  const s = raw.trim()
-  if (!s) return null
-  const normalized = s.replace(/\./g, '').replace(',', '.')
+  const s0 = raw.trim()
+  if (!s0) return null
+  // Remove tudo que não seja dígito, vírgula, ponto ou sinal
+  const cleaned = s0.replace(/[^0-9,.-]/g, '')
+  if (!cleaned) return null
+  const normalized = cleaned.replace(/\./g, '').replace(',', '.')
   const n = Number(normalized)
   return Number.isFinite(n) ? n : null
+}
+
+function digitsOnly(raw: string): string {
+  return raw.replace(/\D/g, '')
+}
+
+function formatBRLFromDigits(raw: string): string {
+  const digits = digitsOnly(raw)
+  if (!digits) return ''
+  const cents = Number(digits)
+  const value = cents / 100
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 function amountForType(type: TransactionType, absolute: number): number {
@@ -55,6 +75,15 @@ function todayISO(): string {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function formatHeaderDate(d = new Date()): string {
+  const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' })
+  const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1)
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  return `${weekdayCap}, ${day}/${month}/${year}`
 }
 
 export default function Home() {
@@ -153,6 +182,40 @@ export default function Home() {
     }
   }
 
+  async function handleEditModalSubmit(payload: {
+    id?: string
+    type: TransactionType
+    name: string
+    amount: number
+  }) {
+    if (!editingTransaction) return
+    setEditLoading(true)
+    setEditError(null)
+    try {
+      const updated = await updateTransaction(editingTransaction.id, {
+        id: editingTransaction.id,
+        type: payload.type,
+        name: payload.name,
+        amount: payload.amount,
+        date: editingTransaction.date,
+      })
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === updated.id ? updated : t))
+      )
+      setIsEditModalOpen(false)
+      setEditingTransaction(null)
+      setEditFormType('')
+      setEditFormDescription('')
+      setEditFormAmount('')
+    } catch (err: unknown) {
+      setEditError(
+        err instanceof Error ? err.message : 'Não foi possível concluir.'
+      )
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
     setLoadState('loading')
@@ -226,6 +289,16 @@ export default function Home() {
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!window.confirm('Excluir esta transação?')) return
+    try {
+      await deleteTransaction(id)
+      setTransactions((prev) => prev.filter((t) => t.id !== id))
+    } catch {
+      window.alert('Não foi possível excluir.')
+    }
+  }
+
   return (
     <main className={styles.dashboard}>
       <aside className={styles.sidebar}>
@@ -243,7 +316,7 @@ export default function Home() {
               color="white"
               classname={styles.dateMuted}
             >
-              Quinta-feira, 08/09/2024
+              {formatHeaderDate()}
             </Typography>
           </div>
           <div className={styles.welcomeRight}>
@@ -312,10 +385,12 @@ export default function Home() {
                 paddingSize="large"
                 type="text"
                 inputMode="decimal"
-                placeholder="00,00"
+                placeholder="R$ 0,00"
                 className={styles.formValueInput}
-                value={formAmount}
-                onChange={(e) => setFormAmount(e.target.value)}
+                value={formAmount ? `R$ ${formAmount}` : ''}
+                onChange={(e) =>
+                  setFormAmount(formatBRLFromDigits(e.target.value))
+                }
                 disabled={submitLoading}
               />
             </div>
@@ -341,81 +416,17 @@ export default function Home() {
         </Paper>
 
         {isEditModalOpen && editingTransaction && (
-          <Modal
+          <EditTransactionModal
             isOpen={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}
-          >
-            <form className={styles.formInner} onSubmit={handleEditTransaction}>
-              <Typography
-                variant="title-lg"
-                color="white"
-                weight="bold"
-                classname={styles.formTitle}
-              >
-                Editar transação
-              </Typography>
-
-              <div className={styles.fieldGroup}>
-                <span className={styles.labelMuted}>Tipo de transação:</span>
-                <Select
-                  className={`${styles.selectFull} ${styles.formSelect}`}
-                  placeholder="Selecione o tipo de transação"
-                  options={transactionFormOptions}
-                  value={editFormType}
-                  onChange={(v) => setEditFormType(v as TransactionType)}
-                  disabled={editLoading}
-                />
-              </div>
-
-              <div className={styles.fieldGroup}>
-                <span className={styles.labelMuted}>Descrição:</span>
-                <Input
-                  paddingSize="large"
-                  type="text"
-                  placeholder="Ex.: Aluguel, presente, salário…"
-                  className={styles.formDescriptionInput}
-                  value={editFormDescription}
-                  onChange={(e) => setEditFormDescription(e.target.value)}
-                  disabled={editLoading}
-                  autoComplete="off"
-                />
-              </div>
-
-              <div className={styles.fieldGroup}>
-                <span className={styles.labelMuted}>Valor:</span>
-                <Input
-                  paddingSize="large"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="00,00"
-                  className={styles.formValueInput}
-                  value={editFormAmount}
-                  onChange={(e) => setEditFormAmount(e.target.value)}
-                  disabled={editLoading}
-                />
-              </div>
-
-              {editError && (
-                <Typography
-                  variant="body-sm"
-                  color="error"
-                  classname={styles.formError}
-                >
-                  {editError}
-                </Typography>
-              )}
-
-              <Button
-                type="submit"
-                variant="default"
-                size="large"
-                className={styles.formSubmit}
-                disabled={editLoading}
-              >
-                {editLoading ? 'Atualizando…' : 'Salvar alterações'}
-              </Button>
-            </form>
-          </Modal>
+            initial={{
+              id: editingTransaction.id,
+              type: editingTransaction.type,
+              name: editingTransaction.name,
+              amount: editingTransaction.amount,
+            }}
+            onSubmit={handleEditModalSubmit}
+          />
         )}
       </div>
 
@@ -466,7 +477,11 @@ export default function Home() {
                         label: 'Editar',
                         onClick: () => openEditModal(t),
                       },
-                      { id: 'delete', label: 'Excluir', onClick: () => {} },
+                      {
+                        id: 'delete',
+                        label: 'Excluir',
+                        onClick: () => handleDelete(t.id),
+                      },
                     ]}
                   />
                 ))}

@@ -3,11 +3,53 @@
 import { useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Menu from '@/components/layout/Menu/Menu'
-import { Button, Paper, Typography, TransactionItem } from '@/components'
+import {
+  Button,
+  Paper,
+  Typography,
+  TransactionItem,
+  Input,
+  Select,
+} from '@/components'
+import EditTransactionModal from '@/components/EditTransactionModal/EditTransactionModal'
+import type { Transaction, TransactionType } from '@/types/transaction'
 import { MdDelete } from 'react-icons/md'
-import type { Transaction } from '@/types/transaction'
+// helpers for BRL formatting/parsing (same behaviour as home page)
+function parseBRLAmount(raw: string): number | null {
+  const s0 = raw.trim()
+  if (!s0) return null
+  const cleaned = s0.replace(/[^0-9,.-]/g, '')
+  if (!cleaned) return null
+  const normalized = cleaned.replace(/\./g, '').replace(',', '.')
+  const n = Number(normalized)
+  return Number.isFinite(n) ? n : null
+}
+
+function digitsOnly(raw: string): string {
+  return raw.replace(/\D/g, '')
+}
+
+function formatBRLFromDigits(raw: string): string {
+  const digits = digitsOnly(raw)
+  if (!digits) return ''
+  const cents = Number(digits)
+  const value = cents / 100
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+function amountForType(type: TransactionType, absolute: number): number {
+  if (type === 'Depósito' || type === 'Pix') return Math.abs(absolute)
+  return -Math.abs(absolute)
+}
 import { formatDisplayDate, groupTransactionsByMonth } from './model'
-import { deleteTransaction, getTransactions } from '@/services/transactions'
+import {
+  deleteTransaction,
+  getTransactions,
+  updateTransaction,
+} from '@/services/transactions'
 import styles from './page.module.scss'
 
 export default function TransactionsPage() {
@@ -16,6 +58,15 @@ export default function TransactionsPage() {
   const [bulkDeleteMode, setBulkDeleteMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  const [editFormType, setEditFormType] = useState<TransactionType | ''>('')
+  const [editFormDescription, setEditFormDescription] = useState('')
+  const [editFormAmount, setEditFormAmount] = useState('')
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>(
     'loading'
   )
@@ -110,6 +161,98 @@ export default function TransactionsPage() {
     }
   }
 
+  function openEditModal(t: Transaction) {
+    setEditingTransaction(t)
+    setEditFormType(t.type)
+    setEditFormDescription(t.name)
+    const formatted = Math.abs(t.amount).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    setEditFormAmount(formatted)
+    setIsEditModalOpen(true)
+  }
+
+  async function handleEditTransaction(e: React.FormEvent) {
+    e.preventDefault()
+    setEditError(null)
+    if (!editingTransaction) return
+    if (!editFormType) {
+      setEditError('Selecione o tipo de transação.')
+      return
+    }
+    const name = editFormDescription.trim()
+    if (!name) {
+      setEditError('Informe uma descrição.')
+      return
+    }
+    const parsed = parseBRLAmount(editFormAmount)
+    if (parsed === null || parsed === 0) {
+      setEditError('Informe um valor válido.')
+      return
+    }
+    const payload: Transaction = {
+      id: editingTransaction.id,
+      type: editFormType,
+      name,
+      amount: amountForType(editFormType, parsed),
+      date: editingTransaction.date,
+    }
+    setEditLoading(true)
+    try {
+      const { updateTransaction } = await import('@/services/transactions')
+      const updated = await updateTransaction(editingTransaction.id, payload)
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === updated.id ? updated : t))
+      )
+      setIsEditModalOpen(false)
+      setEditingTransaction(null)
+      setEditFormType('')
+      setEditFormDescription('')
+      setEditFormAmount('')
+    } catch (err: unknown) {
+      setEditError(
+        err instanceof Error ? err.message : 'Não foi possível concluir.'
+      )
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  async function handleEditModalSubmit(payload: {
+    id?: string
+    type: TransactionType
+    name: string
+    amount: number
+  }) {
+    if (!editingTransaction) return
+    setEditLoading(true)
+    setEditError(null)
+    try {
+      const updated = await updateTransaction(editingTransaction.id, {
+        id: editingTransaction.id,
+        type: payload.type,
+        name: payload.name,
+        amount: payload.amount,
+        date: editingTransaction.date,
+      })
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === updated.id ? updated : t))
+      )
+      setIsEditModalOpen(false)
+      setEditingTransaction(null)
+      setEditFormType('')
+      setEditFormDescription('')
+      setEditFormAmount('')
+    } catch (err: unknown) {
+      setEditError(
+        err instanceof Error ? err.message : 'Não foi possível concluir.'
+      )
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
   return (
     <main className={styles.page}>
       <aside className={styles.sidebar}>
@@ -198,8 +341,7 @@ export default function TransactionsPage() {
                             {
                               id: 'edit',
                               label: 'Editar',
-                              onClick: () =>
-                                router.push(`/transactions/${t.id}`),
+                              onClick: () => openEditModal(t),
                             },
                             {
                               id: 'delete',
@@ -213,6 +355,19 @@ export default function TransactionsPage() {
               </div>
             </div>
           ))}
+          {isEditModalOpen && editingTransaction && (
+            <EditTransactionModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              initial={{
+                id: editingTransaction.id,
+                type: editingTransaction.type,
+                name: editingTransaction.name,
+                amount: editingTransaction.amount,
+              }}
+              onSubmit={handleEditModalSubmit}
+            />
+          )}
         </Paper>
       </section>
     </main>
