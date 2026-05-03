@@ -21,13 +21,16 @@ function formatBRLFromDigits(raw: string): string {
   })
 }
 
-function parseBRLAmount(raw: string): number | null {
+function parseBRLAmount(
+  raw: string,
+  initial: { amount: number }
+): number | null {
   const s0 = raw.trim()
   if (!s0) return null
   const cleaned = s0.replace(/[^0-9,.-]/g, '')
   if (!cleaned) return null
   const normalized = cleaned.replace(/\./g, '').replace(',', '.')
-  const n = Number(normalized)
+  const n = initial.amount < 0 ? -Number(normalized) : Number(normalized)
   return Number.isFinite(n) ? n : null
 }
 
@@ -67,7 +70,7 @@ export default function EditTransactionModal({
     if (!type) return setError('Selecione o tipo de transação.')
     const trimmed = name.trim()
     if (!trimmed) return setError('Informe uma descrição.')
-    const parsed = parseBRLAmount(amount)
+    const parsed = parseBRLAmount(amount, initial ?? { amount: 0 })
     if (parsed === null || parsed === 0)
       return setError('Informe um valor válido.')
     setLoading(true)
