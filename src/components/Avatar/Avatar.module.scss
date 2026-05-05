@@ -1,0 +1,12 @@
+@use '@/styles/variables.scss' as vars;
+
+.avatar {
+  color: vars.$color-orange;
+  padding: vars.$avatar-padding;
+  border-radius: vars.$avatar-radius;
+  border: 2px solid vars.$color-orange;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
