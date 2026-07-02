@@ -99,16 +99,16 @@
 }
 
 .typeText {
-  color: rgba(2, 77, 96, 0.65);
+  color: $primary;
 }
 
 .dateText {
-  color: #7a8a8c;
+  color: $typography-active;
   flex-shrink: 0;
 }
 
 .nameText {
-  color: rgba(2, 77, 96, 0.55);
+  color: $typography-active;
   margin-bottom: 4px;
   margin-right: 4px;
 }

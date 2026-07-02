@@ -50,6 +50,7 @@ export default function PopupMenu({
     <div ref={rootRef} className={getClassnames(styles.root, classname)}>
       {trigger === 'kebab' ? (
         <button
+          aria-label="Ações"
           type="button"
           className={styles.kebab}
           aria-haspopup="menu"
@@ -61,6 +62,7 @@ export default function PopupMenu({
         </button>
       ) : (
         <button
+          aria-label="Ações"
           type="button"
           className={styles.kebab}
           aria-haspopup="menu"

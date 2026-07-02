@@ -349,15 +349,16 @@ export default function Home() {
           <form className={styles.formInner} onSubmit={handleNewTransaction}>
             <Typography
               variant="title-lg"
-              color="white"
+              color="active"
               weight="bold"
               classname={styles.formTitle}
             >
               Nova transação
             </Typography>
             <div className={styles.fieldGroup}>
-              <span className={styles.labelMuted}>Tipo de transação:</span>
+              <label className={styles.labelMuted}>Tipo de transação:</label>
               <Select
+                id="tipoTransacao"
                 className={`${styles.selectFull} ${styles.formSelect}`}
                 placeholder="Selecione o tipo de transação"
                 options={transactionFormOptions}
@@ -367,8 +368,11 @@ export default function Home() {
               />
             </div>
             <div className={styles.fieldGroup}>
-              <span className={styles.labelMuted}>Descrição:</span>
+              <label className={styles.labelMuted} htmlFor="descTransacao">
+                Descrição:
+              </label>
               <Input
+                id="descTransacao"
                 paddingSize="large"
                 type="text"
                 placeholder="Ex.: Aluguel, presente, salário…"
@@ -380,8 +384,11 @@ export default function Home() {
               />
             </div>
             <div className={styles.fieldGroup}>
-              <span className={styles.labelMuted}>Valor:</span>
+              <label className={styles.labelMuted} htmlFor="valorTransacao">
+                Valor:
+              </label>
               <Input
+                id="valorTransacao"
                 paddingSize="large"
                 type="text"
                 inputMode="decimal"

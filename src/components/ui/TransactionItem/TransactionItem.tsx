@@ -43,7 +43,11 @@ export default function TransactionItem({
           {menuPlacement === 'home-stacked-date' ? (
             <>
               <div className={styles.leftStack}>
-                <Typography variant="body-sm" classname={styles.typeText}>
+                <Typography
+                  variant="body-sm"
+                  weight="bold"
+                  classname={styles.typeText}
+                >
                   {type}
                 </Typography>
                 <Typography variant="body-sm" classname={styles.dateText}>
@@ -64,7 +68,11 @@ export default function TransactionItem({
             </>
           ) : menuPlacement === 'inline-right' ? (
             <>
-              <Typography variant="body-sm" classname={styles.typeText}>
+              <Typography
+                variant="body-sm"
+                weight="bold"
+                classname={styles.typeText}
+              >
                 {type}
               </Typography>
               <div className={styles.inlineRight}>
@@ -86,7 +94,11 @@ export default function TransactionItem({
             </>
           ) : (
             <>
-              <Typography variant="body-sm" classname={styles.typeText}>
+              <Typography
+                variant="body-sm"
+                weight="bold"
+                classname={styles.typeText}
+              >
                 {type}
               </Typography>
               <div className={styles.rightTop}>
