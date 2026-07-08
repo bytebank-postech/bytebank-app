@@ -1,0 +1,14 @@
+import { Typography } from '../../ui';
+import Avatar from '../../Avatar/Avatar';
+import style from './Header.module.scss'
+
+export default function Header() {
+  return (
+    <header className={style.header}>
+      <div className={style.content}>
+        <Typography color="white">Joana da Silva Oliveira</Typography>
+        <Avatar></Avatar>
+      </div>
+    </header>
+  )
+}
