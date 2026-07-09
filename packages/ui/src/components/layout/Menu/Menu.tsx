@@ -15,3 +15,4 @@ export default function Menu({ currentPath }: { currentPath: string }) {
     </nav>
   )
 }
+

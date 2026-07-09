@@ -1,6 +1,5 @@
-import Link from 'next/link'
-import { Typography } from '../../ui'
 import style from './MenuItem.module.scss'
+import { Typography } from '../../ui'
 
 export default function MenuItem({
   children,
@@ -13,11 +12,11 @@ export default function MenuItem({
 }>) {
   return (
     <li className={style['menu-item']}>
-      <Link href={href} className={style.link}>
+      <a href={href} className={style.link}>
         <Typography color="active" variant={active ? 'body-bold' : 'body'}>
           {children}
         </Typography>
-      </Link>
+      </a>
     </li>
   )
 }
