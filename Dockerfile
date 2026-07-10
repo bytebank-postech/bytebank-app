@@ -17,10 +17,12 @@ ARG APP_NAME
 ARG MFE_HOME_URL
 ARG MFE_TRANSACTIONS_URL
 ARG MFE_AUTH_URL
+ARG MFE_DASHBOARD_URL
 
 ENV MFE_HOME_URL=$MFE_HOME_URL
 ENV MFE_TRANSACTIONS_URL=$MFE_TRANSACTIONS_URL
 ENV MFE_AUTH_URL=$MFE_AUTH_URL
+ENV MFE_DASHBOARD_URL=$MFE_DASHBOARD_URL
 
 COPY . .
 RUN yarn workspace "$APP_NAME" build
@@ -28,6 +30,7 @@ RUN mkdir -p \
     apps/mfe-auth/public \
     apps/mfe-home/public \
     apps/mfe-transactions/public \
+    apps/mfe-dashboard/public \
     apps/shell/public
 
 FROM node:22-alpine AS runner
