@@ -38,6 +38,27 @@ Aplicação de gerenciamento financeiro desenvolvida como Tech Challenge Fase 01
    http://localhost:3000
    ```
 
+## Docker
+
+O Compose executa cada microfrontend em um container e expõe somente o
+`shell`, que funciona como gateway para os demais.
+
+```bash
+docker compose up --build
+```
+
+Acesse `http://localhost:3000`. Para encerrar, use `docker compose down`.
+
+As URLs internas dos MFEs usadas nos rewrites do `shell` são definidas no
+build por `MFE_HOME_URL`, `MFE_TRANSACTIONS_URL` e `MFE_AUTH_URL`. Os valores
+padrão do Compose usam os nomes dos serviços Docker; copie `.env.example` para
+`.env` somente se precisar alterá-los ou trocar a porta pública `SHELL_PORT`.
+
+No desenvolvimento fora do Docker, nenhuma variável é necessária: o `shell`
+mantém os destinos `localhost:3001`, `localhost:3002` e `localhost:3003`.
+Como os rewrites são gerados no build do Next, toda alteração dessas variáveis
+exige recriar a imagem do `shell`.
+
 ## API
 
 A aplicação possui uma API fake com as seguintes rotas:

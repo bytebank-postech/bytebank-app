@@ -1,0 +1,39 @@
+services:
+  mfe-home:
+    build:
+      context: .
+      args:
+        APP_NAME: mfe-home
+    expose:
+      - '3000'
+
+  mfe-transactions:
+    build:
+      context: .
+      args:
+        APP_NAME: mfe-transactions
+    expose:
+      - '3000'
+
+  mfe-auth:
+    build:
+      context: .
+      args:
+        APP_NAME: mfe-auth
+    expose:
+      - '3000'
+
+  shell:
+    build:
+      context: .
+      args:
+        APP_NAME: shell
+        MFE_HOME_URL: ${MFE_HOME_URL:-http://mfe-home:3000}
+        MFE_TRANSACTIONS_URL: ${MFE_TRANSACTIONS_URL:-http://mfe-transactions:3000}
+        MFE_AUTH_URL: ${MFE_AUTH_URL:-http://mfe-auth:3000}
+    depends_on:
+      - mfe-home
+      - mfe-transactions
+      - mfe-auth
+    ports:
+      - '${SHELL_PORT:-3000}:3000'
