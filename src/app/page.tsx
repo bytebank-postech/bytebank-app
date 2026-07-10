@@ -11,7 +11,6 @@ import {
   Input,
   Paper,
   TransactionItem,
-  Modal,
 } from '@/components'
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import type { Transaction, TransactionType } from '@/types/transaction'
@@ -102,84 +101,11 @@ export default function Home() {
 
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null)
-  const [editLoading, setEditLoading] = useState(false)
-  const [editError, setEditError] = useState<string | null>(null)
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
-  // Estado do modal (edit form)
-  const [editFormType, setEditFormType] = useState<TransactionType | ''>('')
-  const [editFormDescription, setEditFormDescription] = useState('')
-  const [editFormAmount, setEditFormAmount] = useState('')
-
   function openEditModal(t: Transaction) {
-    // Guarda a transação que será editada
     setEditingTransaction(t)
-
-    // Preenche os campos do *modal* apenas
-    setEditFormType(t.type)
-    setEditFormDescription(t.name)
-    const formatted = Math.abs(t.amount).toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-    setEditFormAmount(formatted)
-
     setIsEditModalOpen(true)
-  }
-
-  async function handleEditTransaction(e: React.SubmitEvent) {
-    e.preventDefault()
-    setEditError(null)
-
-    if (!editingTransaction) return
-
-    if (!editFormType) {
-      setEditError('Selecione o tipo de transação.')
-      return
-    }
-
-    const name = editFormDescription.trim()
-    if (!name) {
-      setEditError('Informe uma descrição.')
-      return
-    }
-    const parsed = parseBRLAmount(editFormAmount)
-    if (parsed === null || parsed === 0) {
-      setEditError('Informe um valor válido.')
-      return
-    }
-
-    const payload: Transaction = {
-      id: editingTransaction.id,
-      type: editFormType,
-      name,
-      amount: amountForType(editFormType, parsed),
-      date: editingTransaction.date,
-    }
-
-    setEditLoading(true)
-    try {
-      const updated = await updateTransaction(editingTransaction.id, payload)
-
-      // Atualiza o array localmente
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === updated.id ? updated : t))
-      )
-
-      // Fecha modal e limpa campos de edição
-      setIsEditModalOpen(false)
-      setEditingTransaction(null)
-      setEditFormType('')
-      setEditFormDescription('')
-      setEditFormAmount('')
-    } catch (err: unknown) {
-      setEditError(
-        err instanceof Error ? err.message : 'Não foi possível concluir.'
-      )
-    } finally {
-      setEditLoading(false)
-    }
   }
 
   async function handleEditModalSubmit(payload: {
@@ -189,31 +115,18 @@ export default function Home() {
     amount: number
   }) {
     if (!editingTransaction) return
-    setEditLoading(true)
-    setEditError(null)
-    try {
-      const updated = await updateTransaction(editingTransaction.id, {
-        id: editingTransaction.id,
-        type: payload.type,
-        name: payload.name,
-        amount: payload.amount,
-        date: editingTransaction.date,
-      })
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === updated.id ? updated : t))
-      )
-      setIsEditModalOpen(false)
-      setEditingTransaction(null)
-      setEditFormType('')
-      setEditFormDescription('')
-      setEditFormAmount('')
-    } catch (err: unknown) {
-      setEditError(
-        err instanceof Error ? err.message : 'Não foi possível concluir.'
-      )
-    } finally {
-      setEditLoading(false)
-    }
+    const updated = await updateTransaction(editingTransaction.id, {
+      id: editingTransaction.id,
+      type: payload.type,
+      name: payload.name,
+      amount: payload.amount,
+      date: editingTransaction.date,
+    })
+    setTransactions((prev) =>
+      prev.map((t) => (t.id === updated.id ? updated : t))
+    )
+    setIsEditModalOpen(false)
+    setEditingTransaction(null)
   }
 
   useEffect(() => {
@@ -241,10 +154,20 @@ export default function Home() {
 
   const balance = useMemo(() => totalBalance(transactions), [transactions])
 
-  const monthGroups = useMemo(
-    () => groupTransactionsByMonth(transactions),
-    [transactions]
-  )
+  const monthGroups = useMemo(() => {
+    const groups = groupTransactionsByMonth(transactions)
+    let remaining = 5
+    const preview = []
+
+    for (const group of groups) {
+      if (remaining <= 0) break
+      const items = group.items.slice(0, remaining)
+      remaining -= items.length
+      preview.push({ ...group, items })
+    }
+
+    return preview
+  }, [transactions])
 
   const balanceLabel = balanceVisible
     ? balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

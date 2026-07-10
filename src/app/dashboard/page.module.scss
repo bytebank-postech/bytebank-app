@@ -1,0 +1,68 @@
+@use '@/styles/colors.scss' as *;
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px 20px 40px;
+  display: grid;
+  grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.sidebar {
+  grid-column: 1;
+  height: calc(100vh - 64px);
+}
+
+.content {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.card {
+  padding: 20px 24px 24px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.chartCardLine {
+  padding: 20px 24px 28px;
+  min-height: 380px;
+}
+
+.chartCardPie {
+  padding: 20px 24px 32px;
+  min-height: 420px;
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.emptyState {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .page {
+    grid-template-columns: 1fr;
+    padding: 16px 16px 32px;
+  }
+
+  .sidebar {
+    height: auto;
+  }
+
+  .content {
+    grid-column: 1;
+  }
+}

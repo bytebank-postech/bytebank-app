@@ -12,6 +12,6 @@ export interface ChartProps {
 }
 
 export interface ChartConfig {
-  Chart: ComponentType
-  Series: ComponentType
+  Chart: ComponentType<object>
+  Series: ComponentType<object>
 }

@@ -10,7 +10,7 @@ import {
 } from 'recharts'
 import { ChartConfig, ChartType } from './Chart.types'
 
-export const chartMap: Record<ChartType, ChartConfig> = {
+export const chartMap = {
   line: {
     Chart: LineChart,
     Series: Line,
@@ -27,4 +27,4 @@ export const chartMap: Record<ChartType, ChartConfig> = {
     Chart: PieChart,
     Series: Pie,
   },
-}
+} as Record<ChartType, ChartConfig>

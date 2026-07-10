@@ -11,6 +11,9 @@ export default function Menu({ currentPath }: { currentPath: string }) {
         <MenuItem href="/transactions" active={currentPath === '/transactions'}>
           Transações
         </MenuItem>
+        <MenuItem href="/dashboard" active={currentPath === '/dashboard'}>
+          Dashboard
+        </MenuItem>
       </ul>
     </nav>
   )

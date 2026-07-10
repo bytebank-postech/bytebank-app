@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import Chart from './Chart'
+import { chartTheme, transactionTypeColors } from './Chart.theme'
 
 const meta = {
   title: 'UI/Chart',
@@ -21,12 +22,12 @@ export const Line: Story = {
       {
         name: 'Despesas',
         key: 'Despesas',
-        color: 'red',
+        color: chartTheme.series.despesas,
       },
       {
         name: 'Receitas',
         key: 'Receitas',
-        color: 'green',
+        color: chartTheme.series.receitas,
       },
     ],
     axis: {
@@ -81,12 +82,12 @@ export const Bar: Story = {
       {
         name: 'Despesas',
         key: 'Despesas',
-        color: '#ff2200',
+        color: chartTheme.series.despesas,
       },
       {
         name: 'Receitas',
         key: 'Receitas',
-        color: '#00AA88',
+        color: chartTheme.series.receitas,
       },
     ],
     axis: {
@@ -152,17 +153,17 @@ export const Pie: Story = {
       {
         name: 'Pagamentos',
         value: 4000,
-        fill: '#AA2200',
+        fill: transactionTypeColors.Pagamento,
       },
       {
         name: 'Transferências',
         value: 2400,
-        fill: '#00AA22',
+        fill: transactionTypeColors.Transferência,
       },
       {
         name: 'Investimentos',
         value: 1398,
-        fill: '#2200AA',
+        fill: transactionTypeColors.Pix,
       },
     ],
   },
@@ -176,12 +177,12 @@ export const Area: Story = {
       {
         name: 'Despesas',
         key: 'Despesas',
-        color: '#AA2200',
+        color: chartTheme.series.despesas,
       },
       {
         name: 'Receitas',
         key: 'Receitas',
-        color: '#00AA88',
+        color: chartTheme.series.receitas,
       },
     ],
     axis: {
