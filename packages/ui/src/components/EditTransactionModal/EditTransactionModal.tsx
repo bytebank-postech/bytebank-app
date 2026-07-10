@@ -21,17 +21,19 @@ function formatBRLFromDigits(raw: string): string {
   })
 }
 
-function parseBRLAmount(
-  raw: string,
-  initial: { amount: number }
-): number | null {
+function parseBRLAmount(raw: string): number | null {
   const s0 = raw.trim()
   if (!s0) return null
   const cleaned = s0.replace(/[^0-9,.-]/g, '')
   if (!cleaned) return null
   const normalized = cleaned.replace(/\./g, '').replace(',', '.')
-  const n = initial.amount < 0 ? -Number(normalized) : Number(normalized)
+  const n = Number(normalized)
   return Number.isFinite(n) ? n : null
+}
+
+function amountForType(type: TransactionType, absolute: number): number {
+  if (type === 'Depósito' || type === 'Pix') return Math.abs(absolute)
+  return -Math.abs(absolute)
 }
 
 interface Props {
@@ -70,12 +72,12 @@ export default function EditTransactionModal({
     if (!type) return setError('Selecione o tipo de transação.')
     const trimmed = name.trim()
     if (!trimmed) return setError('Informe uma descrição.')
-    const parsed = parseBRLAmount(amount, initial ?? { amount: 0 })
+    const parsed = parseBRLAmount(amount)
     if (parsed === null || parsed === 0)
       return setError('Informe um valor válido.')
     setLoading(true)
     try {
-      await onSubmit({ id: initial?.id, type, name: trimmed, amount: parsed })
+      await onSubmit({ id: initial?.id, type, name: trimmed, amount: amountForType(type, parsed) })
       onClose()
     } catch (err: unknown) {
       setError(

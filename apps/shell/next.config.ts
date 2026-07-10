@@ -9,46 +9,48 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      // Estáticos e _next/static do mfe-home
-      {
-        source: '/home-assets/_next/:path*',
-        destination: 'http://localhost:3001/home-assets/_next/:path*',
-      },
-      // Estáticos e _next/static do mfe-transactions
-      {
-        source: '/transactions-assets/_next/:path*',
-        destination: 'http://localhost:3002/transactions-assets/_next/:path*',
-      },
-      // Estáticos e _next/static do mfe-auth
-      {
-        source: '/auth-assets/_next/:path*',
-        destination: 'http://localhost:3003/auth-assets/_next/:path*',
-      },
-      // Rota de listagem de transações mapeia para o mfe-transactions
-      {
-        source: '/transactions',
-        destination: 'http://localhost:3002/transactions',
-      },
-      {
-        source: '/transactions/:path*',
-        destination: 'http://localhost:3002/transactions/:path*',
-      },
-      // Rota de autenticação mapeia para o mfe-auth
-      {
-        source: '/auth',
-        destination: 'http://localhost:3003/auth',
-      },
-      {
-        source: '/auth/:path*',
-        destination: 'http://localhost:3003/auth/:path*',
-      },
-      // Rota raiz e demais rotas padrões caem no mfe-home
-      {
-        source: '/:path*',
-        destination: 'http://localhost:3001/:path*',
-      },
-    ]
+    return {
+      beforeFiles: [],
+      afterFiles: [
+        {
+          source: '/home-assets/_next/:path*',
+          destination: 'http://localhost:3001/home-assets/_next/:path*',
+        },
+        {
+          source: '/transactions-assets/_next/:path*',
+          destination: 'http://localhost:3002/transactions-assets/_next/:path*',
+        },
+        {
+          source: '/auth-assets/_next/:path*',
+          destination: 'http://localhost:3003/auth-assets/_next/:path*',
+        },
+        {
+          source: '/transactions',
+          destination: 'http://localhost:3002/transactions',
+        },
+        {
+          source: '/transactions/:path*',
+          destination: 'http://localhost:3002/transactions/:path*',
+        },
+        {
+          source: '/auth',
+          destination: 'http://localhost:3003/auth',
+        },
+        {
+          source: '/auth/:path*',
+          destination: 'http://localhost:3003/auth/:path*',
+        },
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        },
+        {
+          source: '/:path*',
+          destination: 'http://localhost:3001/:path*',
+        },
+      ],
+      fallback: [],
+    }
   },
 }
 
