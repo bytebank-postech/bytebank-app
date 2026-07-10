@@ -1,7 +1,13 @@
 import path from 'node:path'
 import type { NextConfig } from 'next'
 
+const mfeHomeUrl = process.env.MFE_HOME_URL ?? 'http://localhost:3001'
+const mfeTransactionsUrl =
+  process.env.MFE_TRANSACTIONS_URL ?? 'http://localhost:3002'
+const mfeAuthUrl = process.env.MFE_AUTH_URL ?? 'http://localhost:3003'
+
 const nextConfig: NextConfig = {
+  output: 'standalone',
   transpilePackages: ['@bytebank/ui', '@bytebank/shared'],
   sassOptions: {
     loadPaths: [
@@ -14,31 +20,31 @@ const nextConfig: NextConfig = {
       afterFiles: [
         {
           source: '/home-assets/_next/:path*',
-          destination: 'http://localhost:3001/home-assets/_next/:path*',
+          destination: `${mfeHomeUrl}/home-assets/_next/:path*`,
         },
         {
           source: '/transactions-assets/_next/:path*',
-          destination: 'http://localhost:3002/transactions-assets/_next/:path*',
+          destination: `${mfeTransactionsUrl}/transactions-assets/_next/:path*`,
         },
         {
           source: '/auth-assets/_next/:path*',
-          destination: 'http://localhost:3003/auth-assets/_next/:path*',
+          destination: `${mfeAuthUrl}/auth-assets/_next/:path*`,
         },
         {
           source: '/transactions',
-          destination: 'http://localhost:3002/transactions',
+          destination: `${mfeTransactionsUrl}/transactions`,
         },
         {
           source: '/transactions/:path*',
-          destination: 'http://localhost:3002/transactions/:path*',
+          destination: `${mfeTransactionsUrl}/transactions/:path*`,
         },
         {
           source: '/auth',
-          destination: 'http://localhost:3003/auth',
+          destination: `${mfeAuthUrl}/auth`,
         },
         {
           source: '/auth/:path*',
-          destination: 'http://localhost:3003/auth/:path*',
+          destination: `${mfeAuthUrl}/auth/:path*`,
         },
         {
           source: '/api/:path*',
@@ -46,7 +52,7 @@ const nextConfig: NextConfig = {
         },
         {
           source: '/:path*',
-          destination: 'http://localhost:3001/:path*',
+          destination: `${mfeHomeUrl}/:path*`,
         },
       ],
       fallback: [],

@@ -2,6 +2,7 @@ import path from 'node:path'
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   assetPrefix: '/home-assets',
   transpilePackages: ['@bytebank/ui', '@bytebank/shared'],
   sassOptions: {
