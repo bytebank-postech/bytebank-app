@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthProvider/AuthProvider'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function useLoginPage() {

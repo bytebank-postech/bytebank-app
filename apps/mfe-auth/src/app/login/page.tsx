@@ -1,5 +1,6 @@
 'use client'
 
+import { Button, Input, Typography } from '@bytebank/ui'
 import styles from './page.module.scss'
 import useLoginPage from './useLoginPage'
 
@@ -19,43 +20,43 @@ export default function AuthPage() {
     <main className={styles.page}>
       <section className={styles.card}>
         <div className={styles.header}>
-          <p className={styles.eyebrow}>Bem-vindo de volta</p>
-          <h1 className={styles.title}>Acesse sua conta</h1>
-          <p className={styles.description}>
+          <Typography variant="title">Bem-vindo de volta</Typography>
+          <Typography variant="title-lg">Acesse sua conta</Typography>
+          <Typography variant="body">
             Entre com seu e-mail e senha para continuar no ByteBank.
-          </p>
+          </Typography>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>E-mail</span>
-            <input
+            <Typography color="active">E-mail</Typography>
+            <Input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="seu@email.com"
-              className={styles.input}
             />
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Senha</span>
-            <input
+            <Typography color="active">Senha</Typography>
+            <Input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
-              className={styles.input}
             />
           </label>
 
-          <button type="submit" disabled={loading} className={styles.button}>
+          <Button type="submit" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
-          </button>
+          </Button>
         </form>
 
         {(error || message) && (
-          <p className={styles.error}>{error ?? message}</p>
+          <Typography color="error" classname={styles.error}>
+            {error ?? message}
+          </Typography>
         )}
       </section>
     </main>
