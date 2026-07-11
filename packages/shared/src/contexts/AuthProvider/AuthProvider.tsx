@@ -22,7 +22,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-const AUTH_API_URL = '/api/login'
+const AUTH_API_URL = '/auth/api/login'
 
 async function authenticate(email: string, password: string) {
   const response = await fetch(AUTH_API_URL, {
@@ -72,16 +72,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await authenticate(email, password)
 
-      const loggedUser = {
-        id: data.id ?? '1',
-        name: data.name ?? 'Usuário ByteBank',
-        email: data.email ?? email,
-      }
-
-      setUser(loggedUser)
-      localStorage.setItem('bytebank-auth', JSON.stringify(loggedUser))
+      setUser(data)
+      localStorage.setItem('bytebank-auth', JSON.stringify(data))
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao autenticar'
+      const message =
+        err instanceof Error ? err.message : 'Usuário ou senha inválidos'
       setError(message)
       setUser(null)
       localStorage.removeItem('bytebank-auth')
@@ -127,14 +122,16 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated && pathname !== '/auth') {
-        router.push('/auth')
-      }
+    if (loading) {
+      return
+    }
 
-      if (isAuthenticated && pathname === '/auth') {
-        router.push('/')
-      }
+    if (!isAuthenticated && pathname !== '/auth') {
+      router.push('auth')
+    }
+
+    if (isAuthenticated && pathname === '/auth') {
+      router.push('/')
     }
   }, [isAuthenticated, loading, pathname, router])
 

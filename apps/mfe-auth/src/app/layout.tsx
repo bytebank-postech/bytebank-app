@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.scss'
 import { Header as AppHeader } from '@bytebank/ui'
-import { AuthProvider } from '@/contexts/AuthProvider/AuthProvider'
+import { AuthProvider } from '@bytebank/shared'
 
 export const metadata: Metadata = {
   title: 'ByteBank - Login',
