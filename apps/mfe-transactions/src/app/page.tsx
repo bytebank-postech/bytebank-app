@@ -12,6 +12,7 @@ import {
   Menu,
   EditTransactionModal,
   Datepicker,
+  Pagination,
 } from '@bytebank/ui'
 import type { Transaction, TransactionType } from '@bytebank/shared'
 import { MdDelete, MdManageSearch } from 'react-icons/md'
@@ -101,6 +102,9 @@ export default function TransactionsPage() {
   )
   const [loadError, setLoadError] = useState<string | null>(null)
 
+  const PAGE_SIZE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
     if (isSearchActive && searchInputRef.current) {
         searchInputRef.current.focus();
@@ -186,9 +190,18 @@ const filteredTransactions = useMemo(() => {
     return filtered;
 }, [transactions, searchTerm, selectedType, selectedMonth]);
 
+const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+
+    return filteredTransactions.slice(startIndex, endIndex);
+}, [filteredTransactions, currentPage]);
+
+const totalItems = filteredTransactions.length;
+
 const monthGroups = useMemo(
-    () => groupTransactionsByMonth(filteredTransactions),
-    [filteredTransactions]
+    () => groupTransactionsByMonth(paginatedTransactions),
+    [paginatedTransactions]
   )
 
   const allSelected =
@@ -373,9 +386,7 @@ const monthGroups = useMemo(
                 />
               </div>
               
-              {isSearchActive && (
-                <div className={styles.searchBar}>
-                  <Input
+              {isSearchActive && ( <div className={styles.searchBar}> <Input
                     ref={searchInputRef}
                     placeholder="Buscar por nome ou tipo..."
                     value={searchTerm}
@@ -478,6 +489,14 @@ const monthGroups = useMemo(
               </div>
             </div>
           ))}
+
+          <Pagination
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              pageSize={PAGE_SIZE}
+              totalItems={totalItems}
+          />
+
           {isEditModalOpen && editingTransaction && (
             <EditTransactionModal
               isOpen={isEditModalOpen}
