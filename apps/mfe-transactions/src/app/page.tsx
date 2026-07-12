@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
 import {
   Button,
   Paper,
@@ -54,8 +53,6 @@ import {
 import styles from './page.module.scss'
 
 export default function TransactionsPage() {
-  const pathname = usePathname()
-  const router = useRouter()
   const [bulkDeleteMode, setBulkDeleteMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -256,7 +253,7 @@ export default function TransactionsPage() {
   return (
     <main className={styles.page}>
       <aside className={styles.sidebar}>
-        <Menu currentPath={pathname} />
+        <Menu currentPath="/transactions" />
       </aside>
 
       <section className={styles.content}>

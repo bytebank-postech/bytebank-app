@@ -5,25 +5,27 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(10px, 2vh, 20px);
   align-items: flex-start;
 }
 
 .formTitle {
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  padding-right: 36px;
 }
 
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: clamp(4px, 1vh, 8px);
+  width: 100%;
 }
 
 .labelMuted {
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: clamp(12px, 1.8vh, 14px);
   font-weight: 700;
-  line-height: 150%;
+  line-height: 140%;
   color: rgba(255, 255, 255, 0.88);
 }
 
@@ -53,4 +55,14 @@
 .formSubmit {
   width: 220px;
   max-width: 100%;
+}
+
+@media (max-height: 760px) {
+  .formInner {
+    gap: 8px;
+  }
+
+  .fieldGroup {
+    gap: 2px;
+  }
 }

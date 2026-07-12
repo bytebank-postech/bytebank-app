@@ -1,4 +1,4 @@
-import { ElementType } from 'react'
+import { ComponentType } from 'react'
 
 export type ChartType = 'line' | 'bar' | 'area' | 'pie'
 export type Series = { key: string; name: string; color?: string }
@@ -12,6 +12,6 @@ export interface ChartProps {
 }
 
 export interface ChartConfig {
-  Chart: ElementType
-  Series: ElementType
+  Chart: ComponentType<object>
+  Series: ComponentType<object>
 }
