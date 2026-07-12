@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Button,
   Paper,
@@ -10,9 +11,10 @@ import {
   Select,
   Menu,
   EditTransactionModal,
+  Datepicker,
 } from '@bytebank/ui'
 import type { Transaction, TransactionType } from '@bytebank/shared'
-import { MdDelete } from 'react-icons/md'
+import { MdDelete, MdManageSearch } from 'react-icons/md'
 // helpers for BRL formatting/parsing (same behaviour as home page)
 function parseBRLAmount(raw: string): number | null {
   const s0 = raw.trim()
@@ -23,6 +25,24 @@ function parseBRLAmount(raw: string): number | null {
   const n = Number(normalized)
   return Number.isFinite(n) ? n : null
 }
+
+function normalizeString(str: string): string {
+    const decomposed = str.normalize("NFD");
+    return decomposed.replace(/[\u030-\u036f]/g, "").toLowerCase();
+}
+
+export const mapToSelectOptions = () => {
+
+  const TRANSACTION_TYPES   = [
+    'Todos',
+    'Transferência', 
+    'Pagamento', 
+    'Depósito', 
+    'Pix'
+  ];
+
+  return TRANSACTION_TYPES.map(type => ({label: type, value: type }));
+};
 
 function digitsOnly(raw: string): string {
   return raw.replace(/\D/g, '')
@@ -53,6 +73,17 @@ import {
 import styles from './page.module.scss'
 
 export default function TransactionsPage() {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [selectedType, setSelectedType] = useState<TransactionType | 'Todos'>(
+    'Todos'
+  );
+  const [selectedMonth, setSelectedMonth] = useState<string | 'Todos'>('Todos');
+  const searchInputRef = useRef<HTMLInputElement | null>(null);  
+
   const [bulkDeleteMode, setBulkDeleteMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -69,6 +100,46 @@ export default function TransactionsPage() {
     'loading'
   )
   const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isSearchActive && searchInputRef.current) {
+        searchInputRef.current.focus();
+    }
+}, [isSearchActive]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSearchTerm('');
+        setIsSearchActive(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSearchActive]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        const isSearchShortcut = (
+          (event.ctrlKey && event.key === 'F' && event.shiftKey) || // Ctrl + F + Shift
+          (event.metaKey && event.key === '/' )                     // Cmd  + /
+        );
+
+        if (isSearchShortcut) {
+            setIsSearchActive(true); 
+        }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
 
   useEffect(() => {
     let cancelled = false
@@ -92,9 +163,32 @@ export default function TransactionsPage() {
     }
   }, [])
 
-  const monthGroups = useMemo(
-    () => groupTransactionsByMonth(transactions),
-    [transactions]
+const filteredTransactions = useMemo(() => {
+    if (!searchTerm && selectedType === 'Todos' && selectedMonth === 'Todos') {
+        return transactions;
+    }
+    
+    const lowerCaseSearch = searchTerm.toLowerCase();
+    let filtered = transactions.filter(t => {
+        return t.name.toLowerCase().includes(lowerCaseSearch) || 
+        t.type.toLowerCase().includes(lowerCaseSearch);
+    });
+
+    if (selectedType !== 'Todos') {
+        filtered = filtered.filter(t => t.type === selectedType);
+    }
+
+    if (selectedMonth !== 'Todos') {
+        const monthKey = selectedMonth;
+        filtered = filtered.filter(t => t.date = monthKey);
+    }
+
+    return filtered;
+}, [transactions, searchTerm, selectedType, selectedMonth]);
+
+const monthGroups = useMemo(
+    () => groupTransactionsByMonth(filteredTransactions),
+    [filteredTransactions]
   )
 
   const allSelected =
@@ -263,6 +357,38 @@ export default function TransactionsPage() {
               Transações
             </Typography>
             <div className={styles.actions}>
+              
+              <div className={styles.filterControls}>
+                <Select
+                  options={mapToSelectOptions()}
+                  placeholder="Filtrar por Tipo"
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e as TransactionType)}
+                  />
+              </div>
+              <div className={styles.filterControls}>
+                <Datepicker
+                  id="datepicker"
+                  onChange={(monthKey) => setSelectedMonth(monthKey.target.value)}
+                />
+              </div>
+              
+              {isSearchActive && (
+                <div className={styles.searchBar}>
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Buscar por nome ou tipo..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              )}
+              <Button
+                variant="rounded"
+                icon={<MdManageSearch size={20} />}
+                onClick={() => setIsSearchActive(!isSearchActive)}
+                aria-label={isSearchActive ? 'Limpar filtro' : 'Buscar transações'}
+              />
               <Button
                 variant="rounded"
                 icon={<MdDelete size={20} />}
