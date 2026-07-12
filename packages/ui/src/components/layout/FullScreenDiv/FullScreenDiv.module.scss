@@ -1,0 +1,6 @@
+@use '@bytebank/ui/src/styles/variables.scss' as vars;
+
+.fullscreen {
+  height: calc(100vh - vars.$header-height);
+  width: 100vw;
+}

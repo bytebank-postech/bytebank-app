@@ -1,7 +1,65 @@
 @use '../../../styles/colors.scss' as *;
+@use '../../../styles/variables.scss' as vars;
 
 .chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.title {
+  text-align: center;
+}
+
+.canvas {
+  width: 100%;
+  min-height: 280px;
+}
+
+.tooltip {
   background-color: $white;
-  border-radius: 8px;
-  padding: 16px;
+  border: 1px solid $tertiary;
+  border-radius: vars.$input-radius;
+  padding: 12px 16px;
+  font-family: 'Inter', sans-serif;
+  box-shadow: none;
+}
+
+.tooltipLabel {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: $typography-active;
+}
+
+.tooltipList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltipItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: $typography-placeholder;
+}
+
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tooltipValue {
+  margin-left: auto;
+  font-weight: 600;
+  color: $typography-active;
 }

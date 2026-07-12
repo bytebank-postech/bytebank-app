@@ -1,0 +1,41 @@
+@use '@bytebank/ui/src/styles/variables.scss' as vars;
+@use '@bytebank/ui/src/styles/colors.scss' as colors;
+
+.page {
+  min-height: calc(100vh - vars.$header-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: colors.$gray;
+}
+
+.card {
+  width: 100%;
+  max-width: 430px;
+  background: colors.$white;
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(0, 77, 97, 0.12);
+  padding: 32px;
+  font-family: sans-serif;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error {
+  margin-top: 16px;
+}

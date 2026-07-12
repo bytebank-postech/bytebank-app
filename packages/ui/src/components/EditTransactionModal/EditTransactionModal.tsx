@@ -77,7 +77,12 @@ export default function EditTransactionModal({
       return setError('Informe um valor válido.')
     setLoading(true)
     try {
-      await onSubmit({ id: initial?.id, type, name: trimmed, amount: amountForType(type, parsed) })
+      await onSubmit({
+        id: initial?.id,
+        type,
+        name: trimmed,
+        amount: amountForType(type, parsed),
+      })
       onClose()
     } catch (err: unknown) {
       setError(
@@ -117,7 +122,7 @@ export default function EditTransactionModal({
         <div className={styles.fieldGroup}>
           <span className={styles.labelMuted}>Descrição:</span>
           <Input
-            paddingSize="large"
+            paddingSize="medium"
             type="text"
             placeholder="Ex.: Aluguel, presente, salário…"
             className={styles.formDescriptionInput}
@@ -131,7 +136,7 @@ export default function EditTransactionModal({
         <div className={styles.fieldGroup}>
           <span className={styles.labelMuted}>Valor:</span>
           <Input
-            paddingSize="large"
+            paddingSize="medium"
             type="text"
             inputMode="decimal"
             placeholder="R$ 0,00"
@@ -155,7 +160,7 @@ export default function EditTransactionModal({
         <Button
           type="submit"
           variant="default"
-          size="large"
+          size="medium"
           className={styles.formSubmit}
           disabled={loading}
         >

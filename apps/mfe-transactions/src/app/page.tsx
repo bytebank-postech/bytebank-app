@@ -347,7 +347,7 @@ const monthGroups = useMemo(
   return (
     <main className={styles.page}>
       <aside className={styles.sidebar}>
-        <Menu currentPath={pathname} />
+        <Menu currentPath="/transactions" />
       </aside>
 
       <section className={styles.content}>
