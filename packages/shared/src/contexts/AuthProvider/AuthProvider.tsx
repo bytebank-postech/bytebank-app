@@ -23,6 +23,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 const AUTH_API_URL = '/auth/api/login'
+const LOGOUT_API_URL = '/auth/api/logout'
 
 async function authenticate(email: string, password: string) {
   const response = await fetch(AUTH_API_URL, {
@@ -40,7 +41,18 @@ async function authenticate(email: string, password: string) {
     throw new Error(data.error ?? 'Falha na autenticação')
   }
 
-  return data.user
+  return data
+}
+
+async function logoutUser() {
+  try {
+    await fetch(LOGOUT_API_URL, {
+      method: 'POST',
+      cache: 'no-store',
+    })
+  } catch {
+    console.error('Erro ao fazer logout no servidor')
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -70,25 +82,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
-      const data = await authenticate(email, password)
+      const { user, token } = await authenticate(email, password)
 
-      setUser(data)
-      localStorage.setItem('bytebank-auth', JSON.stringify(data))
+      setUser(user)
+      localStorage.setItem('bytebank-auth', JSON.stringify(user))
+      localStorage.setItem('bytebank-token', token)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Usuário ou senha inválidos'
       setError(message)
       setUser(null)
       localStorage.removeItem('bytebank-auth')
+      localStorage.removeItem('bytebank-token')
       throw new Error(message)
     } finally {
       setLoading(false)
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null)
     localStorage.removeItem('bytebank-auth')
+    localStorage.removeItem('bytebank-token')
+    await logoutUser()
   }
 
   const value = useMemo(

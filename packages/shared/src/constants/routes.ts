@@ -1,10 +1,11 @@
 const ROUTES = {
   public: {
-    LOGIN: '/login',
+    LOGIN: '/auth',
   },
   private: {
     DASHBOARD: '/home',
+    TRANSACOES: '/transactions',
   },
 }
 
-export default ROUTES
+export { ROUTES }
