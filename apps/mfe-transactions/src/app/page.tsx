@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Button,
@@ -13,7 +13,7 @@ import {
   EditTransactionModal,
 } from '@bytebank/ui'
 import type { Transaction, TransactionType } from '@bytebank/shared'
-import { MdDelete } from 'react-icons/md'
+import { MdDelete, MdManageSearch } from 'react-icons/md'
 // helpers for BRL formatting/parsing (same behaviour as home page)
 function parseBRLAmount(raw: string): number | null {
   const s0 = raw.trim()
@@ -56,6 +56,11 @@ import styles from './page.module.scss'
 export default function TransactionsPage() {
   const pathname = usePathname()
   const router = useRouter()
+
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isSearchActive, setIsSearchActive] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement | null>(null); 
+
   const [bulkDeleteMode, setBulkDeleteMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -72,6 +77,46 @@ export default function TransactionsPage() {
     'loading'
   )
   const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isSearchActive && searchInputRef.current) {
+        searchInputRef.current.focus();
+    }
+}, [isSearchActive]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSearchTerm('');
+        setIsSearchActive(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSearchActive]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        const isSearchShortcut = (
+          (event.ctrlKey && event.key === 'F' && event.shiftKey) || // Ctrl + F + Shift
+          (event.metaKey && event.key === '/' )                     // Cmd  + /
+        );
+
+        if (isSearchShortcut) {
+            setIsSearchActive(true); 
+        }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
 
   useEffect(() => {
     let cancelled = false
@@ -95,9 +140,20 @@ export default function TransactionsPage() {
     }
   }, [])
 
-  const monthGroups = useMemo(
-    () => groupTransactionsByMonth(transactions),
-    [transactions]
+  const filteredTransactions = useMemo(() => {
+    if (!searchTerm) return transactions;
+
+    const lowerCaseSearch = searchTerm.toLowerCase();
+
+    return transactions.filter(t => {
+        return t.name.toLowerCase().includes(lowerCaseSearch) || 
+               t.type.toLowerCase().includes(lowerCaseSearch);
+    });
+  }, [transactions, searchTerm]);
+
+const monthGroups = useMemo(
+    () => groupTransactionsByMonth(filteredTransactions),
+    [filteredTransactions]
   )
 
   const allSelected =
@@ -266,6 +322,22 @@ export default function TransactionsPage() {
               Transações
             </Typography>
             <div className={styles.actions}>
+              {isSearchActive && (
+                <div className={styles.searchBar}>
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Buscar por nome ou tipo..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              )}
+              <Button
+                variant="rounded"
+                icon={<MdManageSearch size={20} />}
+                onClick={() => setIsSearchActive(!isSearchActive)}
+                aria-label={isSearchActive ? 'Limpar filtro' : 'Buscar transações'}
+              />
               <Button
                 variant="rounded"
                 icon={<MdDelete size={20} />}
