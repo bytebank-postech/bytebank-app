@@ -220,7 +220,6 @@ __metadata:
     "@chromatic-com/storybook": ^5.1.1
     "@storybook/addon-a11y": ^10.3.5
     "@storybook/addon-docs": ^10.3.5
-    "@storybook/addon-vitest": ^10.3.5
     "@storybook/nextjs-vite": ^10.3.5
     "@types/react": ^19
     "@types/react-dom": ^19
@@ -1655,31 +1654,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/addon-vitest@npm:^10.3.5":
-  version: 10.3.5
-  resolution: "@storybook/addon-vitest@npm:10.3.5"
-  dependencies:
-    "@storybook/global": "npm:^5.0.0"
-    "@storybook/icons": "npm:^2.0.1"
-  peerDependencies:
-    "@vitest/browser": ^3.0.0 || ^4.0.0
-    "@vitest/browser-playwright": ^4.0.0
-    "@vitest/runner": ^3.0.0 || ^4.0.0
-    storybook: ^10.3.5
-    vitest: ^3.0.0 || ^4.0.0
-  peerDependenciesMeta:
-    "@vitest/browser":
-      optional: true
-    "@vitest/browser-playwright":
-      optional: true
-    "@vitest/runner":
-      optional: true
-    vitest:
-      optional: true
-  checksum: 58e6ce8565120a50ebe2984e6603dfcceb3cae677076f56bc70218caeda1d8d2b7ed4a046cd686b34cedab909339ee3c02ffa61b9c4b7505bc67d5ca1b5de4c8
-  languageName: node
-  linkType: hard
-
 "@storybook/builder-vite@npm:10.3.5":
   version: 10.3.5
   resolution: "@storybook/builder-vite@npm:10.3.5"
@@ -2953,7 +2927,6 @@ __metadata:
     "@recharts/devtools": ^0.0.14
     "@storybook/addon-a11y": ^10.3.5
     "@storybook/addon-docs": ^10.3.5
-    "@storybook/addon-vitest": ^10.3.5
     "@storybook/nextjs-vite": ^10.3.5
     "@types/jsonwebtoken": ^9.0.5
     "@types/node": ^20

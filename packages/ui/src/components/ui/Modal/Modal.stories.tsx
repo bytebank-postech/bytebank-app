@@ -8,6 +8,9 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  args: {
+    isOpen: true,
+  },
   argTypes: {
     onClose: {
       description: 'Função chamada ao fechar o modal',

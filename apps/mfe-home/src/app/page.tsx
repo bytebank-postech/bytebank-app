@@ -13,9 +13,10 @@ import {
   Paper,
   TransactionItem,
   Menu,
+  Modal,
   EditTransactionModal,
 } from '@bytebank/ui'
-import { MdVisibility, MdVisibilityOff } from 'react-icons/md'
+import { MdOpenInFull, MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import type { Transaction, TransactionCategory, TransactionType } from '@bytebank/shared'
 import {
   formatDisplayDate,
@@ -145,6 +146,7 @@ export default function Home() {
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false)
 
   function openEditModal(t: Transaction) {
     setEditingTransaction(t)
@@ -339,6 +341,20 @@ export default function Home() {
           </div>
         </Paper>
 
+        <div className={styles.analyticsHeader}>
+          <Typography variant="title-lg" color="active" weight="bold">
+            Análises financeiras
+          </Typography>
+          <Button
+            type="button"
+            variant="outline"
+            size="medium"
+            onClick={() => setIsAnalyticsModalOpen(true)}
+          >
+            <MdOpenInFull aria-hidden="true" size={18} /> Ampliar gráficos
+          </Button>
+        </div>
+
         <section className={styles.analytics} aria-label="Análises financeiras">
           <Paper classname={styles.chartCard}>
             <Chart
@@ -370,6 +386,54 @@ export default function Home() {
             />
           </Paper>
         </section>
+
+        <Modal
+          isOpen={isAnalyticsModalOpen}
+          onClose={() => setIsAnalyticsModalOpen(false)}
+          classname={styles.analyticsModal}
+        >
+          <section aria-label="Análises financeiras ampliadas">
+            <Typography
+              variant="title-lg"
+              color="active"
+              weight="bold"
+              classname={styles.analyticsModalTitle}
+            >
+              Análises financeiras
+            </Typography>
+            <div className={styles.analyticsExpanded}>
+              <Paper classname={styles.chartCard}>
+                <Chart
+                  title="Receitas x Despesas"
+                  type="line"
+                  series={[
+                    {
+                      name: 'Receitas',
+                      key: 'Receitas',
+                      color: chartTheme.series.receitas,
+                    },
+                    {
+                      name: 'Despesas',
+                      key: 'Despesas',
+                      color: chartTheme.series.despesas,
+                    },
+                  ]}
+                  axis={{ x: { key: 'name', show: true }, y: { show: true } }}
+                  data={monthlyFlowData}
+                />
+              </Paper>
+              <Paper classname={styles.chartCard}>
+                <Chart
+                  title="Distribuição por tipo"
+                  type="pie"
+                  series={[{ name: 'Movimentações', key: 'value' }]}
+                  axis={{ x: { show: false }, y: { show: false } }}
+                  data={typeDistributionData}
+                />
+              </Paper>
+            </div>
+          </section>
+        </Modal>
 
         <Paper color="gray" classname={styles.formCard}>
           <form className={styles.formInner} onSubmit={handleNewTransaction}>
