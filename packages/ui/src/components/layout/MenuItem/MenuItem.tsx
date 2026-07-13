@@ -1,0 +1,22 @@
+import style from './MenuItem.module.scss'
+import { Typography } from '../../ui'
+
+export default function MenuItem({
+  children,
+  active = false,
+  href,
+}: Readonly<{
+  active?: boolean
+  children: React.ReactNode
+  href: string
+}>) {
+  return (
+    <li className={style['menu-item']}>
+      <a href={href} className={style.link}>
+        <Typography color="active" variant={active ? 'body-bold' : 'body'}>
+          {children}
+        </Typography>
+      </a>
+    </li>
+  )
+}

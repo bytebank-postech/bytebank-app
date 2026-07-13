@@ -1,0 +1,68 @@
+@use '../../styles/variables.scss' as vars;
+
+.formInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 2vh, 20px);
+  align-items: flex-start;
+}
+
+.formTitle {
+  margin-bottom: 0;
+  padding-right: 36px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1vh, 8px);
+  width: 100%;
+}
+
+.labelMuted {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 1.8vh, 14px);
+  font-weight: 700;
+  line-height: 140%;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.selectFull {
+  max-width: 100%;
+}
+
+.formSelect {
+  width: 320px;
+  max-width: 100%;
+}
+
+.formDescriptionInput {
+  width: 320px;
+  max-width: 100%;
+}
+
+.formValueInput {
+  width: 180px;
+  max-width: 100%;
+}
+
+.formError {
+  margin-top: -4px;
+}
+
+.formSubmit {
+  width: 220px;
+  max-width: 100%;
+}
+
+@media (max-height: 760px) {
+  .formInner {
+    gap: 8px;
+  }
+
+  .fieldGroup {
+    gap: 2px;
+  }
+}

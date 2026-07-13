@@ -1,0 +1,75 @@
+services:
+  mfe-home:
+    build:
+      context: .
+      args:
+        APP_NAME: mfe-home
+    expose:
+      - '3000'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mfe-transactions:
+    build:
+      context: .
+      args:
+        APP_NAME: mfe-transactions
+    expose:
+      - '3000'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/transactions']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mfe-auth:
+    build:
+      context: .
+      args:
+        APP_NAME: mfe-auth
+    expose:
+      - '3000'
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-bytebank-local-development-secret}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/auth']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  shell:
+    build:
+      context: .
+      args:
+        APP_NAME: shell
+        MFE_HOME_URL: ${MFE_HOME_URL:-http://mfe-home:3000}
+        MFE_TRANSACTIONS_URL: ${MFE_TRANSACTIONS_URL:-http://mfe-transactions:3000}
+        MFE_AUTH_URL: ${MFE_AUTH_URL:-http://mfe-auth:3000}
+    depends_on:
+      mfe-home:
+        condition: service_healthy
+      mfe-transactions:
+        condition: service_healthy
+      mfe-auth:
+        condition: service_healthy
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-bytebank-local-development-secret}
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/api/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    ports:
+      - '${SHELL_PORT:-3000}:3000'

@@ -1,0 +1,33 @@
+@use '../../../styles/variables.scss' as vars;
+
+.header {
+  display: flex;
+  justify-content: center;
+  background-color: vars.$color-blue;
+  padding: vars.$header-padding;
+  max-height: vars.$header-height;
+}
+
+.content {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  color: vars.$color-white;
+}
+
+.logoutButton {
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 6px 12px;
+
+  &:hover {
+    background-color: rgb(255 255 255 / 15%);
+  }
+}

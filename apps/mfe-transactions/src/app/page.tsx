@@ -1,0 +1,515 @@
+'use client'
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Button,
+  Paper,
+  Typography,
+  TransactionItem,
+  Input,
+  Select,
+  Menu,
+  EditTransactionModal,
+  Datepicker,
+  Pagination,
+} from '@bytebank/ui'
+import type { Transaction, TransactionCategory, TransactionType } from '@bytebank/shared'
+import { MdDelete, MdFilterAltOff, MdManageSearch } from 'react-icons/md'
+// helpers for BRL formatting/parsing (same behaviour as home page)
+function parseBRLAmount(raw: string): number | null {
+  const s0 = raw.trim()
+  if (!s0) return null
+  const cleaned = s0.replace(/[^0-9,.-]/g, '')
+  if (!cleaned) return null
+  const normalized = cleaned.replace(/\./g, '').replace(',', '.')
+  const n = Number(normalized)
+  return Number.isFinite(n) ? n : null
+}
+
+export const mapToSelectOptions = () => {
+
+  const TRANSACTION_TYPES   = [
+    'Todos',
+    'Transferência', 
+    'Pagamento', 
+    'Depósito', 
+    'Pix'
+  ];
+
+  return TRANSACTION_TYPES.map(type => ({label: type, value: type }));
+};
+
+function digitsOnly(raw: string): string {
+  return raw.replace(/\D/g, '')
+}
+
+function formatBRLFromDigits(raw: string): string {
+  const digits = digitsOnly(raw)
+  if (!digits) return ''
+  const cents = Number(digits)
+  const value = cents / 100
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+function amountForType(type: TransactionType, absolute: number): number {
+  if (type === 'Depósito' || type === 'Pix') return Math.abs(absolute)
+  return -Math.abs(absolute)
+}
+import {
+  formatDisplayDate,
+  groupTransactionsByMonth,
+  deleteTransaction,
+  updateTransaction,
+  uploadTransactionAttachments,
+  deleteTransactionAttachment,
+  clearFilters,
+  loadTransactions,
+  removeTransactions,
+  replaceTransaction,
+  setMonth,
+  setPage,
+  setSearch,
+  setType,
+  useAppDispatch,
+  useAppSelector,
+} from '@bytebank/shared'
+import styles from './page.module.scss'
+
+export default function TransactionsPage() {
+  const dispatch = useAppDispatch()
+  const { items: transactions, total: totalItems, totalPages, status: loadState, error: loadError, filters } =
+    useAppSelector((state) => state.transactions)
+  const { search: searchTerm, type: selectedType, month: selectedMonth, page } = filters
+  const [isSearchActive, setIsSearchActive] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
+
+  const [bulkDeleteMode, setBulkDeleteMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  const [editFormType, setEditFormType] = useState<TransactionType | ''>('')
+  const [editFormDescription, setEditFormDescription] = useState('')
+  const [editFormAmount, setEditFormAmount] = useState('')
+
+  useEffect(() => {
+    if (isSearchActive && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [isSearchActive])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        dispatch(setSearch(''))
+        setIsSearchActive(false)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [dispatch])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isSearchShortcut =
+        (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') ||
+        (event.metaKey && event.key === '/')
+
+      if (isSearchShortcut) {
+        event.preventDefault()
+        setIsSearchActive(true)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+
+  useEffect(() => {
+    void dispatch(loadTransactions(filters))
+  }, [dispatch, filters])
+
+  const monthGroups = useMemo(
+    () => groupTransactionsByMonth(transactions),
+    [transactions]
+  )
+
+  const allSelected =
+    bulkDeleteMode && transactions.length > 0
+      ? transactions.every((transaction) => selectedIds[transaction.id])
+      : false
+
+  function setAllSelected(next: boolean) {
+    if (!bulkDeleteMode) return
+    if (!next) {
+      setSelectedIds({})
+      return
+    }
+    const map: Record<string, boolean> = {}
+    for (const item of transactions) map[item.id] = true
+    setSelectedIds(map)
+  }
+
+  function toggleSearch() {
+    if (isSearchActive) {
+      dispatch(setSearch(''))
+    }
+    setIsSearchActive((current) => !current)
+  }
+
+  function handleClearFilters() {
+    dispatch(clearFilters())
+    setIsSearchActive(false)
+  }
+
+  useEffect(() => {
+    setSelectedIds({})
+  }, [searchTerm, selectedType, selectedMonth])
+
+  const selectedCount = useMemo(
+    () => Object.values(selectedIds).filter(Boolean).length,
+    [selectedIds]
+  )
+
+  async function handleBulkDeleteSelected() {
+    const ids = Object.entries(selectedIds)
+      .filter(([, v]) => v)
+      .map(([id]) => id)
+    if (ids.length === 0) return
+    if (!window.confirm(`Excluir ${ids.length} transação(ões) selecionada(s)?`))
+      return
+    try {
+      await Promise.all(ids.map((id) => deleteTransaction(id)))
+      dispatch(removeTransactions(ids))
+      setSelectedIds({})
+      setBulkDeleteMode(false)
+    } catch {
+      window.alert('Não foi possível excluir.')
+    }
+  }
+
+  function onTrashButtonClick() {
+    if (!bulkDeleteMode) {
+      setBulkDeleteMode(true)
+      setSelectedIds({})
+      return
+    }
+    if (selectedCount === 0) {
+      setBulkDeleteMode(false)
+      setSelectedIds({})
+      return
+    }
+    void handleBulkDeleteSelected()
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('Excluir esta transação?')) return
+    try {
+      await deleteTransaction(id)
+      dispatch(removeTransactions([id]))
+    } catch {
+      window.alert('Não foi possível excluir.')
+    }
+  }
+
+  function openEditModal(t: Transaction) {
+    setEditingTransaction(t)
+    setEditFormType(t.type)
+    setEditFormDescription(t.name)
+    const formatted = Math.abs(t.amount).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    setEditFormAmount(formatted)
+    setIsEditModalOpen(true)
+  }
+
+  async function handleEditTransaction(e: React.FormEvent) {
+    e.preventDefault()
+    setEditError(null)
+    if (!editingTransaction) return
+    if (!editFormType) {
+      setEditError('Selecione o tipo de transação.')
+      return
+    }
+    const name = editFormDescription.trim()
+    if (!name) {
+      setEditError('Informe uma descrição.')
+      return
+    }
+    const parsed = parseBRLAmount(editFormAmount)
+    if (parsed === null || parsed === 0) {
+      setEditError('Informe um valor válido.')
+      return
+    }
+    const payload: Transaction = {
+      id: editingTransaction.id,
+      type: editFormType,
+      name,
+      amount: amountForType(editFormType, parsed),
+      date: editingTransaction.date,
+    }
+    setEditLoading(true)
+    try {
+      const updated = await updateTransaction(editingTransaction.id, payload)
+      dispatch(replaceTransaction(updated))
+      setIsEditModalOpen(false)
+      setEditingTransaction(null)
+      setEditFormType('')
+      setEditFormDescription('')
+      setEditFormAmount('')
+    } catch (err: unknown) {
+      setEditError(
+        err instanceof Error ? err.message : 'Não foi possível concluir.'
+      )
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  async function handleEditModalSubmit(payload: {
+    id?: string
+    type: TransactionType
+    name: string
+    amount: number
+    category: TransactionCategory
+    files: File[]
+  }) {
+    if (!editingTransaction) return
+    setEditLoading(true)
+    setEditError(null)
+    try {
+      const updated = await updateTransaction(editingTransaction.id, {
+        id: editingTransaction.id,
+        type: payload.type,
+        name: payload.name,
+        amount: payload.amount,
+        date: editingTransaction.date,
+        category: payload.category,
+      })
+      const attachments = await uploadTransactionAttachments(editingTransaction.id, payload.files)
+      dispatch(
+        replaceTransaction({
+          ...updated,
+          attachments: [...(updated.attachments ?? []), ...attachments],
+        })
+      )
+      setIsEditModalOpen(false)
+      setEditingTransaction(null)
+      setEditFormType('')
+      setEditFormDescription('')
+      setEditFormAmount('')
+    } catch (err: unknown) {
+      setEditError(
+        err instanceof Error ? err.message : 'Não foi possível concluir.'
+      )
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  return (
+    <main className={styles.page}>
+      <aside className={styles.sidebar}>
+        <Menu currentPath="/transactions" />
+      </aside>
+
+      <section className={styles.content}>
+        <Paper classname={styles.card}>
+          <div className={styles.header}>
+            <Typography variant="title-lg" color="active" weight="bold">
+              Transações
+            </Typography>
+            <div className={styles.actions}>
+              
+              <div className={styles.filterControls}>
+                <Select
+                  options={mapToSelectOptions()}
+                  placeholder="Filtrar por Tipo"
+                  value={selectedType}
+                  onChange={(value) => {
+                    dispatch(setType(value as TransactionType | 'Todos'))
+                  }}
+                />
+              </div>
+              <div className={styles.filterControls}>
+                <Datepicker
+                  id="transaction-month-filter"
+                  aria-label="Filtrar por mês"
+                  className={styles.monthInput}
+                  type="month"
+                  value={selectedMonth === 'Todos' ? '' : selectedMonth}
+                  onChange={(event) => {
+                    dispatch(setMonth(event.target.value || 'Todos'))
+                  }}
+                />
+              </div>
+              
+              {isSearchActive && (
+                <div className={styles.searchBar}>
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Buscar por nome ou tipo..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      dispatch(setSearch(e.target.value))
+                    }}
+                  />
+                </div>
+              )}
+              <Button
+                variant="rounded"
+                icon={<MdManageSearch size={20} />}
+                onClick={toggleSearch}
+                aria-label={isSearchActive ? 'Limpar filtro' : 'Buscar transações'}
+              />
+              {(searchTerm || selectedType !== 'Todos' || selectedMonth !== 'Todos') && (
+                <Button
+                  variant="rounded"
+                  icon={<MdFilterAltOff size={20} />}
+                  onClick={handleClearFilters}
+                  aria-label="Limpar todos os filtros"
+                />
+              )}
+              <Button
+                variant="rounded"
+                icon={<MdDelete size={20} />}
+                onClick={onTrashButtonClick}
+                aria-label={
+                  bulkDeleteMode
+                    ? selectedCount > 0
+                      ? 'Confirmar exclusão das selecionadas'
+                      : 'Cancelar exclusão em massa'
+                    : 'Exclusão em massa'
+                }
+              />
+            </div>
+          </div>
+
+          {bulkDeleteMode ? (
+            <div className={styles.bulkRow}>
+              <label
+                className={styles.bulkCheckboxWrapper}
+                aria-label="Selecionar todos"
+              >
+                <input
+                  className={styles.bulkCheckboxInput}
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={(e) => setAllSelected(e.target.checked)}
+                />
+                <span className={styles.bulkCheckboxBox} aria-hidden="true" />
+              </label>
+              <span className={styles.bulkLabel}>Selecionar todos</span>
+            </div>
+          ) : null}
+
+          {loadState === 'loading' ? (
+            <Typography variant="body-sm" color="active">
+              Carregando…
+            </Typography>
+          ) : null}
+          {loadState === 'error' ? (
+            <Typography variant="body-sm" color="error">
+              {loadError}
+            </Typography>
+          ) : null}
+          {loadState === 'idle' && monthGroups.length === 0 ? (
+            <Typography variant="body-sm" color="active">
+              Nenhuma transação encontrada.
+            </Typography>
+          ) : null}
+
+          {monthGroups.map((group) => (
+            <div key={group.key} className={styles.monthBlock}>
+              <Typography variant="title-sm" color="active" weight="bold">
+                {group.label}
+              </Typography>
+              <div className={styles.list}>
+                {group.items.map((t) => (
+                  <TransactionItem
+                    key={t.id}
+                    type={t.type}
+                    amount={t.amount}
+                    date={formatDisplayDate(t.date)}
+                    name={t.name}
+                    menuPlacement="home-stacked-date"
+                    selectable={bulkDeleteMode}
+                    selected={!!selectedIds[t.id]}
+                    onSelectedChange={(next) =>
+                      setSelectedIds((prev) => ({ ...prev, [t.id]: next }))
+                    }
+                    menuItems={
+                      bulkDeleteMode
+                        ? undefined
+                        : [
+                            {
+                              id: 'edit',
+                              label: 'Editar',
+                              onClick: () => openEditModal(t),
+                            },
+                            {
+                              id: 'delete',
+                              label: 'Excluir',
+                              onClick: () => void handleDelete(t.id),
+                            },
+                          ]
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+          {loadState === 'idle' && totalPages > 1 ? (
+            <Pagination
+              currentPage={page}
+              totalItems={totalItems}
+              pageSize={10}
+              onPageChange={(nextPage) => dispatch(setPage(nextPage))}
+            />
+          ) : null}
+          {isEditModalOpen && editingTransaction && (
+            <EditTransactionModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              initial={{
+                id: editingTransaction.id,
+                type: editingTransaction.type,
+                name: editingTransaction.name,
+                amount: editingTransaction.amount,
+                category: editingTransaction.category,
+                attachments: editingTransaction.attachments,
+              }}
+            onSubmit={handleEditModalSubmit}
+            onRemoveAttachment={async (attachmentId) => {
+              if (!editingTransaction) return
+              await deleteTransactionAttachment(editingTransaction.id, attachmentId)
+              dispatch(
+                replaceTransaction({
+                  ...editingTransaction,
+                  attachments: (editingTransaction.attachments ?? []).filter(
+                    (attachment) => attachment.id !== attachmentId
+                  ),
+                })
+              )
+            }}
+            />
+          )}
+        </Paper>
+      </section>
+    </main>
+  )
+}

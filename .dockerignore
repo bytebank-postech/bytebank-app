@@ -1,0 +1,12 @@
+**/node_modules
+**/.next
+**/.turbo
+**/.cache
+.git
+.env*
+!.env.example
+coverage
+storybook-static
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
