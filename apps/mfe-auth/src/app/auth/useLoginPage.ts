@@ -1,17 +1,15 @@
 import { useAuth } from '@bytebank/shared'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function useLoginPage() {
   const { login, error, loading, isAuthenticated } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
-  const router = useRouter()
 
-  if (isAuthenticated) {
-    router.push('/')
-  }
+  useEffect(() => {
+    if (isAuthenticated) window.location.assign('/')
+  }, [isAuthenticated])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -19,7 +17,7 @@ export default function useLoginPage() {
 
     try {
       await login(email, password)
-      router.push('/')
+      window.location.assign('/')
     } catch {
       setMessage('Não foi possível entrar. Verifique seus dados.')
     }

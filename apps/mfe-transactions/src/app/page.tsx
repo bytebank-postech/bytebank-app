@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useRef } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
   Paper,
@@ -12,9 +11,10 @@ import {
   Menu,
   EditTransactionModal,
   Datepicker,
+  Pagination,
 } from '@bytebank/ui'
-import type { Transaction, TransactionType } from '@bytebank/shared'
-import { MdDelete, MdManageSearch } from 'react-icons/md'
+import type { Transaction, TransactionCategory, TransactionType } from '@bytebank/shared'
+import { MdDelete, MdFilterAltOff, MdManageSearch } from 'react-icons/md'
 // helpers for BRL formatting/parsing (same behaviour as home page)
 function parseBRLAmount(raw: string): number | null {
   const s0 = raw.trim()
@@ -24,11 +24,6 @@ function parseBRLAmount(raw: string): number | null {
   const normalized = cleaned.replace(/\./g, '').replace(',', '.')
   const n = Number(normalized)
   return Number.isFinite(n) ? n : null
-}
-
-function normalizeString(str: string): string {
-    const decomposed = str.normalize("NFD");
-    return decomposed.replace(/[\u030-\u036f]/g, "").toLowerCase();
 }
 
 export const mapToSelectOptions = () => {
@@ -67,26 +62,32 @@ import {
   formatDisplayDate,
   groupTransactionsByMonth,
   deleteTransaction,
-  getTransactions,
   updateTransaction,
+  uploadTransactionAttachments,
+  deleteTransactionAttachment,
+  clearFilters,
+  loadTransactions,
+  removeTransactions,
+  replaceTransaction,
+  setMonth,
+  setPage,
+  setSearch,
+  setType,
+  useAppDispatch,
+  useAppSelector,
 } from '@bytebank/shared'
 import styles from './page.module.scss'
 
 export default function TransactionsPage() {
-  const pathname = usePathname()
-  const router = useRouter()
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const [selectedType, setSelectedType] = useState<TransactionType | 'Todos'>(
-    'Todos'
-  );
-  const [selectedMonth, setSelectedMonth] = useState<string | 'Todos'>('Todos');
-  const searchInputRef = useRef<HTMLInputElement | null>(null);  
+  const dispatch = useAppDispatch()
+  const { items: transactions, total: totalItems, totalPages, status: loadState, error: loadError, filters } =
+    useAppSelector((state) => state.transactions)
+  const { search: searchTerm, type: selectedType, month: selectedMonth, page } = filters
+  const [isSearchActive, setIsSearchActive] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   const [bulkDeleteMode, setBulkDeleteMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
-  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null)
   const [editLoading, setEditLoading] = useState(false)
@@ -96,104 +97,59 @@ export default function TransactionsPage() {
   const [editFormType, setEditFormType] = useState<TransactionType | ''>('')
   const [editFormDescription, setEditFormDescription] = useState('')
   const [editFormAmount, setEditFormAmount] = useState('')
-  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>(
-    'loading'
-  )
-  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isSearchActive && searchInputRef.current) {
-        searchInputRef.current.focus();
+      searchInputRef.current.focus()
     }
-}, [isSearchActive]);
+  }, [isSearchActive])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setSearchTerm('');
-        setIsSearchActive(false);
+        dispatch(setSearch(''))
+        setIsSearchActive(false)
       }
-    };
-    document.addEventListener('keydown', handleKeyDown);
+    }
+    document.addEventListener('keydown', handleKeyDown)
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isSearchActive]);
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [dispatch])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-        const isSearchShortcut = (
-          (event.ctrlKey && event.key === 'F' && event.shiftKey) || // Ctrl + F + Shift
-          (event.metaKey && event.key === '/' )                     // Cmd  + /
-        );
+      const isSearchShortcut =
+        (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') ||
+        (event.metaKey && event.key === '/')
 
-        if (isSearchShortcut) {
-            setIsSearchActive(true); 
-        }
-    };
+      if (isSearchShortcut) {
+        event.preventDefault()
+        setIsSearchActive(true)
+      }
+    }
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown)
 
     return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-
-  useEffect(() => {
-    let cancelled = false
-    getTransactions()
-      .then((data) => {
-        if (!cancelled) {
-          setTransactions(data)
-          setLoadState('idle')
-          setLoadError(null)
-        }
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) {
-          setTransactions([])
-          setLoadState('error')
-          setLoadError(e instanceof Error ? e.message : 'Erro ao carregar.')
-        }
-      })
-    return () => {
-      cancelled = true
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
 
-const filteredTransactions = useMemo(() => {
-    if (!searchTerm && selectedType === 'Todos' && selectedMonth === 'Todos') {
-        return transactions;
-    }
-    
-    const lowerCaseSearch = searchTerm.toLowerCase();
-    let filtered = transactions.filter(t => {
-        return t.name.toLowerCase().includes(lowerCaseSearch) || 
-        t.type.toLowerCase().includes(lowerCaseSearch);
-    });
 
-    if (selectedType !== 'Todos') {
-        filtered = filtered.filter(t => t.type === selectedType);
-    }
+  useEffect(() => {
+    void dispatch(loadTransactions(filters))
+  }, [dispatch, filters])
 
-    if (selectedMonth !== 'Todos') {
-        const monthKey = selectedMonth;
-        filtered = filtered.filter(t => t.date = monthKey);
-    }
-
-    return filtered;
-}, [transactions, searchTerm, selectedType, selectedMonth]);
-
-const monthGroups = useMemo(
-    () => groupTransactionsByMonth(filteredTransactions),
-    [filteredTransactions]
+  const monthGroups = useMemo(
+    () => groupTransactionsByMonth(transactions),
+    [transactions]
   )
 
   const allSelected =
     bulkDeleteMode && transactions.length > 0
-      ? transactions.every((i) => selectedIds[i.id])
+      ? transactions.every((transaction) => selectedIds[transaction.id])
       : false
 
   function setAllSelected(next: boolean) {
@@ -206,6 +162,22 @@ const monthGroups = useMemo(
     for (const item of transactions) map[item.id] = true
     setSelectedIds(map)
   }
+
+  function toggleSearch() {
+    if (isSearchActive) {
+      dispatch(setSearch(''))
+    }
+    setIsSearchActive((current) => !current)
+  }
+
+  function handleClearFilters() {
+    dispatch(clearFilters())
+    setIsSearchActive(false)
+  }
+
+  useEffect(() => {
+    setSelectedIds({})
+  }, [searchTerm, selectedType, selectedMonth])
 
   const selectedCount = useMemo(
     () => Object.values(selectedIds).filter(Boolean).length,
@@ -221,7 +193,7 @@ const monthGroups = useMemo(
       return
     try {
       await Promise.all(ids.map((id) => deleteTransaction(id)))
-      setTransactions((prev) => prev.filter((t) => !ids.includes(t.id)))
+      dispatch(removeTransactions(ids))
       setSelectedIds({})
       setBulkDeleteMode(false)
     } catch {
@@ -247,7 +219,7 @@ const monthGroups = useMemo(
     if (!window.confirm('Excluir esta transação?')) return
     try {
       await deleteTransaction(id)
-      setTransactions((prev) => prev.filter((t) => t.id !== id))
+      dispatch(removeTransactions([id]))
     } catch {
       window.alert('Não foi possível excluir.')
     }
@@ -293,9 +265,7 @@ const monthGroups = useMemo(
     setEditLoading(true)
     try {
       const updated = await updateTransaction(editingTransaction.id, payload)
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === updated.id ? updated : t))
-      )
+      dispatch(replaceTransaction(updated))
       setIsEditModalOpen(false)
       setEditingTransaction(null)
       setEditFormType('')
@@ -315,6 +285,8 @@ const monthGroups = useMemo(
     type: TransactionType
     name: string
     amount: number
+    category: TransactionCategory
+    files: File[]
   }) {
     if (!editingTransaction) return
     setEditLoading(true)
@@ -326,9 +298,14 @@ const monthGroups = useMemo(
         name: payload.name,
         amount: payload.amount,
         date: editingTransaction.date,
+        category: payload.category,
       })
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === updated.id ? updated : t))
+      const attachments = await uploadTransactionAttachments(editingTransaction.id, payload.files)
+      dispatch(
+        replaceTransaction({
+          ...updated,
+          attachments: [...(updated.attachments ?? []), ...attachments],
+        })
       )
       setIsEditModalOpen(false)
       setEditingTransaction(null)
@@ -363,13 +340,21 @@ const monthGroups = useMemo(
                   options={mapToSelectOptions()}
                   placeholder="Filtrar por Tipo"
                   value={selectedType}
-                  onChange={(e) => setSelectedType(e as TransactionType)}
-                  />
+                  onChange={(value) => {
+                    dispatch(setType(value as TransactionType | 'Todos'))
+                  }}
+                />
               </div>
               <div className={styles.filterControls}>
                 <Datepicker
-                  id="datepicker"
-                  onChange={(monthKey) => setSelectedMonth(monthKey.target.value)}
+                  id="transaction-month-filter"
+                  aria-label="Filtrar por mês"
+                  className={styles.monthInput}
+                  type="month"
+                  value={selectedMonth === 'Todos' ? '' : selectedMonth}
+                  onChange={(event) => {
+                    dispatch(setMonth(event.target.value || 'Todos'))
+                  }}
                 />
               </div>
               
@@ -379,16 +364,26 @@ const monthGroups = useMemo(
                     ref={searchInputRef}
                     placeholder="Buscar por nome ou tipo..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      dispatch(setSearch(e.target.value))
+                    }}
                   />
                 </div>
               )}
               <Button
                 variant="rounded"
                 icon={<MdManageSearch size={20} />}
-                onClick={() => setIsSearchActive(!isSearchActive)}
+                onClick={toggleSearch}
                 aria-label={isSearchActive ? 'Limpar filtro' : 'Buscar transações'}
               />
+              {(searchTerm || selectedType !== 'Todos' || selectedMonth !== 'Todos') && (
+                <Button
+                  variant="rounded"
+                  icon={<MdFilterAltOff size={20} />}
+                  onClick={handleClearFilters}
+                  aria-label="Limpar todos os filtros"
+                />
+              )}
               <Button
                 variant="rounded"
                 icon={<MdDelete size={20} />}
@@ -478,6 +473,14 @@ const monthGroups = useMemo(
               </div>
             </div>
           ))}
+          {loadState === 'idle' && totalPages > 1 ? (
+            <Pagination
+              currentPage={page}
+              totalItems={totalItems}
+              pageSize={10}
+              onPageChange={(nextPage) => dispatch(setPage(nextPage))}
+            />
+          ) : null}
           {isEditModalOpen && editingTransaction && (
             <EditTransactionModal
               isOpen={isEditModalOpen}
@@ -487,8 +490,22 @@ const monthGroups = useMemo(
                 type: editingTransaction.type,
                 name: editingTransaction.name,
                 amount: editingTransaction.amount,
+                category: editingTransaction.category,
+                attachments: editingTransaction.attachments,
               }}
-              onSubmit={handleEditModalSubmit}
+            onSubmit={handleEditModalSubmit}
+            onRemoveAttachment={async (attachmentId) => {
+              if (!editingTransaction) return
+              await deleteTransactionAttachment(editingTransaction.id, attachmentId)
+              dispatch(
+                replaceTransaction({
+                  ...editingTransaction,
+                  attachments: (editingTransaction.attachments ?? []).filter(
+                    (attachment) => attachment.id !== attachmentId
+                  ),
+                })
+              )
+            }}
             />
           )}
         </Paper>

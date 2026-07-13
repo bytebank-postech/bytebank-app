@@ -40,6 +40,16 @@
   flex-shrink: 0;
 }
 
+.filterControls {
+  width: 180px;
+}
+
+.monthInput {
+  box-sizing: border-box;
+  min-height: 44px;
+  width: 100%;
+}
+
 .bulkRow {
   display: flex;
   align-items: center;
@@ -115,6 +125,6 @@
 }
 
 .searchBar {
-    width: 210px;
-    field-sizing: fixed;
+  width: 210px;
+  field-sizing: fixed;
 }

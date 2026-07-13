@@ -1,132 +1,118 @@
-# ByteBank
+# ByteBank — Tech Challenge Fase 2
 
-Aplicação de gerenciamento financeiro desenvolvida como Tech Challenge Fase 01 da Pós-Tech Front-End Engineering - FIAP.
+Aplicação de gerenciamento financeiro construída com microfrontends em Next.js.
+Inclui Home com indicadores, gestão de transações, autenticação JWT, anexos e
+um design system documentado no Storybook.
 
-## Tecnologias
+## Arquitetura
 
-- Next.js 16
-- TypeScript
-- SCSS
+O `shell` é a entrada pública: mantém a API mock, valida a sessão e encaminha
+rotas aos MFEs por rewrites do Next.js.
 
-## Pré-requisitos
+| Módulo | Porta local | Responsabilidade |
+| --- | ---: | --- |
+| `shell` | 3000 | Gateway, JWT e API de transações |
+| `mfe-home` | 3001 | Home, saldo, extrato, criação e gráficos |
+| `mfe-transactions` | 3002 | Busca, filtros, paginação, edição e anexos |
+| `mfe-auth` | 3003 | Login, logout e sessão |
+| `@bytebank/ui` | 6006 | Design system e Storybook |
+| `@bytebank/shared` | — | Tipos, serviços e utilitários compartilhados |
 
-- Node.js >= 20
+Rotas públicas: `/`, `/transactions`, `/auth` e `/api/transactions`.
 
-## Como rodar
+## Gerenciador de pacotes
 
-1. Clone o repositório
+O projeto usa exclusivamente **Yarn 3.5.0**, via Corepack. O único lockfile
+válido é [yarn.lock](./yarn.lock). Não use `npm install` nem crie
+`package-lock.json`.
 
-   ```bash
-   git clone https://github.com/bytebank-postech/bytebank-app.git
-   ```
+Pré-requisito: Node.js 20 ou superior.
 
-2. Instale as dependências
+```bash
+corepack enable
+corepack yarn install --immutable
+```
 
-   ```bash
-   npm install
-   ```
+## Executar localmente
 
-3. Rode o projeto
+```bash
+corepack yarn dev
+```
 
-   ```bash
-   npm run dev
-   ```
+Abra `http://localhost:3000`. O Turbo inicia todos os MFEs; as portas internas
+estão descritas na tabela de arquitetura.
 
-4. Acesse no navegador
+Credenciais de demonstração:
 
-   ```
-   http://localhost:3000
-   ```
+```text
+E-mail: usuario@bytebank.com
+Senha: senha123
+```
 
 ## Docker
 
-O Compose executa cada microfrontend em um container e expõe somente o
-`shell`, que funciona como gateway para os demais.
-
 ```bash
+Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Acesse `http://localhost:3000`. Para encerrar, use `docker compose down`.
+O Compose expõe somente o `shell` em `http://localhost:3000`; os MFEs se
+comunicam na rede interna. Para encerrar:
 
-As URLs internas dos MFEs usadas nos rewrites do `shell` são definidas no
-build por `MFE_HOME_URL`, `MFE_TRANSACTIONS_URL` e `MFE_AUTH_URL`. Os valores
-padrão do Compose usam os nomes dos serviços Docker; copie `.env.example` para
-`.env` somente se precisar alterá-los ou trocar a porta pública `SHELL_PORT`.
-
-No desenvolvimento fora do Docker, nenhuma variável é necessária: o `shell`
-mantém os destinos `localhost:3001`, `localhost:3002` e `localhost:3003`.
-Como os rewrites são gerados no build do Next, toda alteração dessas variáveis
-exige recriar a imagem do `shell`.
-
-## API
-
-A aplicação possui uma API fake com as seguintes rotas:
-
-| Método | Rota                   | Descrição                  |
-| ------ | ---------------------- | -------------------------- |
-| GET    | /api/transactions      | Lista todas as transações  |
-| POST   | /api/transactions      | Cria uma nova transação    |
-| GET    | /api/transactions/[id] | Busca uma transação por id |
-| PUT    | /api/transactions/[id] | Edita uma transação        |
-| DELETE | /api/transactions/[id] | Exclui uma transação       |
-
-## Módulo de transações (front)
-
-**Cliente HTTP** — `src/services/transactions.ts` (comunicação com `/api/transactions`):
-
-| Função                        | Descrição                  |
-| ----------------------------- | -------------------------- |
-| `getTransactions()`           | Lista todas as transações  |
-| `getTransactionById(id)`      | Busca uma transação por id |
-| `createTransaction(data)`     | Cria uma nova transação    |
-| `updateTransaction(id, data)` | Edita uma transação        |
-| `deleteTransaction(id)`       | Exclui uma transação       |
-
-**Helpers de domínio/UI** — `src/app/transactions/model.ts` (formatação e agregação usadas na home e na listagem):
-
-| Função / tipo                | Descrição                  |
-| ---------------------------- | -------------------------- |
-| `totalBalance()`             | Soma dos valores (saldo)   |
-| `formatDisplayDate()`        | Data para exibição (pt-BR) |
-| `groupTransactionsByMonth()` | Agrupa transações por mês  |
-| `MonthGroup`                 | Tipo do agrupamento mensal |
-
-## Estrutura do projeto
-
-```
-bytebank-app/
-├── public/
-├── src/
-│   ├── app/
-│   │   ├── api/                 # API Routes
-│   │   ├── globals.scss
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   └── transactions/        # Páginas /transactions, model.ts (helpers)
-│   ├── components/
-│   │   ├── layout/              # Menu, Header
-│   │   └── ui/                  # Design system (Button, TransactionItem, …)
-│   ├── data/
-│   │   └── transactions.json    # Mock de dados
-│   ├── services/
-│   │   └── transactions.ts      # Cliente HTTP da API de transações
-│   ├── styles/
-│   │   ├── mixins.scss          # Mixins de responsividade
-│   │   └── variables.scss       # Variáveis globais
-│   └── types/
-│       └── transaction.ts       # Tipagem
-├── next.config.ts
-├── package.json
-└── tsconfig.json
+```bash
+docker compose down
 ```
 
-## Equipe
+Use uma chave forte em `JWT_SECRET` fora do ambiente local. Transações e
+anexos usam a API mock em memória e são reinicializados ao recriar o `shell`.
+Para deploy com HTTPS, configure `COOKIE_SECURE=true`; mantenha `false` apenas
+ao testar localmente em HTTP.
 
-| Nome                                                 | Responsabilidade                  |
-| ---------------------------------------------------- | --------------------------------- |
-| [@kaleobonatto](https://github.com/kaleobonatto)     | Setup, arquitetura e API Routes   |
-| [@vitoraf](https://github.com/vitoraf)               | Design System / Storybook / Vídeo |
-| [@brendobc](https://github.com/brendobc)             | Design System / Storybook / Vídeo |
-| [@ramillecsantos](https://github.com/ramillecsantos) | Home page                         |
-| [@carlosjosecjr](https://github.com/carlosjosecjr)   | Adicionar/Editar transação        |
+## Funcionalidades
+
+- Saldo, extrato resumido e gráficos financeiros na Home.
+- Criação e edição de transações com validação de campos.
+- Sugestão automática de categoria pela descrição, com alteração manual.
+- Upload de PDF, PNG e JPEG de até 5 MB; abertura e remoção de anexos.
+- Busca, filtros por tipo/mês e paginação server-side.
+- Redux Toolkit centraliza filtros, paginação, carregamento e dados da listagem.
+- JWT em cookie HTTP-only; middleware protege rotas privadas.
+
+## Storybook e roteiro de apresentação
+
+```bash
+corepack yarn storybook
+```
+
+Abra `http://localhost:6006` e apresente:
+
+1. Componentes base: `Button`, `Input`, `Select`, `Typography`, `Modal` e `Loader`.
+2. Componentes de domínio: `TransactionItem`, `Chart` e `Pagination`.
+3. Componentes de layout: `Header`, `Menu`, `Avatar` e `FullScreenDiv`.
+4. Aba **Accessibility** para os checks do addon.
+5. Código em `packages/ui/src/components`, explicando o reuso entre MFEs.
+
+## Qualidade e validação
+
+```bash
+corepack yarn build
+corepack yarn test
+corepack yarn lint
+corepack yarn build-storybook
+```
+
+Roteiro sugerido para a demonstração: login → Home → nova transação com anexo
+→ filtros e paginação → Storybook → Docker.
+
+## Estrutura
+
+```text
+apps/
+  shell/                # gateway, middleware JWT e API mock
+  mfe-home/             # Home e análises financeiras
+  mfe-transactions/     # listagem e gestão de transações
+  mfe-auth/             # autenticação
+packages/
+  ui/                   # design system e Storybook
+  shared/               # contratos e serviços compartilhados
+```

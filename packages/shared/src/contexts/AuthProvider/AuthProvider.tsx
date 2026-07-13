@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { FullScreenDiv, Loader } from '@bytebank/ui'
 
@@ -24,6 +24,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 const AUTH_API_URL = '/auth/api/login'
 const LOGOUT_API_URL = '/auth/api/logout'
+const SESSION_API_URL = '/auth/api/session'
 
 async function authenticate(email: string, password: string) {
   const response = await fetch(AUTH_API_URL, {
@@ -55,26 +56,31 @@ async function logoutUser() {
   }
 }
 
+async function getSession(): Promise<User> {
+  const response = await fetch(SESSION_API_URL, { cache: 'no-store' })
+  if (!response.ok) return null
+  const data = await response.json()
+  return data.user ?? null
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const stored =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('bytebank-auth')
-        : null
+    let cancelled = false
+    getSession()
+      .then((sessionUser) => {
+        if (!cancelled) setUser(sessionUser)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
 
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored))
-      } catch {
-        localStorage.removeItem('bytebank-auth')
-      }
+    return () => {
+      cancelled = true
     }
-
-    setLoading(false)
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -82,18 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
-      const { user, token } = await authenticate(email, password)
+      const { user } = await authenticate(email, password)
 
       setUser(user)
-      localStorage.setItem('bytebank-auth', JSON.stringify(user))
-      localStorage.setItem('bytebank-token', token)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Usuário ou senha inválidos'
       setError(message)
       setUser(null)
-      localStorage.removeItem('bytebank-auth')
-      localStorage.removeItem('bytebank-token')
       throw new Error(message)
     } finally {
       setLoading(false)
@@ -102,8 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     setUser(null)
-    localStorage.removeItem('bytebank-auth')
-    localStorage.removeItem('bytebank-token')
     await logoutUser()
   }
 
@@ -135,7 +135,6 @@ export function useAuth() {
 export function AuthGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAuth()
   const pathname = usePathname()
-  const router = useRouter()
 
   useEffect(() => {
     if (loading) {
@@ -143,13 +142,13 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     }
 
     if (!isAuthenticated && pathname !== '/auth') {
-      router.push('auth')
+      window.location.assign('/auth')
     }
 
     if (isAuthenticated && pathname === '/auth') {
-      router.push('/')
+      window.location.assign('/')
     }
-  }, [isAuthenticated, loading, pathname, router])
+  }, [isAuthenticated, loading, pathname])
 
   if (loading || !isAuthenticated) {
     return (

@@ -1,7 +1,6 @@
 import { findUserByEmailAndPassword } from '@/data/users'
-import { JWT_CONFIG } from '@bytebank/shared'
+import { signAuthToken } from '@bytebank/shared'
 import { NextResponse } from 'next/server'
-import jwt from 'jsonwebtoken'
 
 export async function POST(request: Request) {
   try {
@@ -23,9 +22,7 @@ export async function POST(request: Request) {
       email: user.email,
     }
 
-    const token = jwt.sign(userData, JWT_CONFIG.secret, {
-      expiresIn: JWT_CONFIG.expiresIn,
-    })
+    const token = await signAuthToken(userData)
 
     const response = NextResponse.json({
       token,
@@ -34,8 +31,9 @@ export async function POST(request: Request) {
 
     response.cookies.set('auth-token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'lax',
+      path: '/',
       maxAge: 24 * 60 * 60, // 24 horas
     })
 

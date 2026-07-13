@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Button,
+  Chart,
+  chartTheme,
+  transactionTypeColors,
   Select,
   Typography,
   Input,
@@ -14,7 +16,7 @@ import {
   EditTransactionModal,
 } from '@bytebank/ui'
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md'
-import type { Transaction, TransactionType } from '@bytebank/shared'
+import type { Transaction, TransactionCategory, TransactionType } from '@bytebank/shared'
 import {
   formatDisplayDate,
   groupTransactionsByMonth,
@@ -23,6 +25,11 @@ import {
   getTransactions,
   updateTransaction,
   deleteTransaction,
+  useAuth,
+  suggestTransactionCategory,
+  transactionCategories,
+  uploadTransactionAttachments,
+  deleteTransactionAttachment,
 } from '@bytebank/shared'
 import styles from './page.module.scss'
 
@@ -83,8 +90,43 @@ function formatHeaderDate(d = new Date()): string {
   return `${weekdayCap}, ${day}/${month}/${year}`
 }
 
+function buildMonthlyFlowData(transactions: Transaction[]) {
+  const months = new Map<string, { Receitas: number; Despesas: number }>()
+  for (const transaction of transactions) {
+    const month = transaction.date.slice(0, 7)
+    const entry = months.get(month) ?? { Receitas: 0, Despesas: 0 }
+    if (transaction.amount >= 0) entry.Receitas += transaction.amount
+    else entry.Despesas += Math.abs(transaction.amount)
+    months.set(month, entry)
+  }
+
+  return [...months.entries()].sort().map(([month, values]) => ({
+    name: new Date(`${month}-01T12:00:00`).toLocaleDateString('pt-BR', {
+      month: 'short',
+      year: '2-digit',
+    }),
+    ...values,
+  }))
+}
+
+function buildTypeDistributionData(transactions: Transaction[]) {
+  const types = new Map<TransactionType, number>()
+  for (const transaction of transactions) {
+    types.set(
+      transaction.type,
+      (types.get(transaction.type) ?? 0) + Math.abs(transaction.amount)
+    )
+  }
+  return [...types.entries()].map(([name, value]) => ({
+    name,
+    value,
+    fill: transactionTypeColors[name],
+  }))
+}
+
 export default function Home() {
   const pathname = usePathname()
+  const { user } = useAuth()
   const [balanceVisible, setBalanceVisible] = useState(true)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>(
@@ -93,6 +135,9 @@ export default function Home() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [formType, setFormType] = useState<TransactionType | ''>('')
   const [formDescription, setFormDescription] = useState('')
+  const [formCategory, setFormCategory] = useState<TransactionCategory>('Outros')
+  const [categoryTouched, setCategoryTouched] = useState(false)
+  const [formFiles, setFormFiles] = useState<File[]>([])
   const [formAmount, setFormAmount] = useState('')
   const [submitLoading, setSubmitLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -111,6 +156,8 @@ export default function Home() {
     type: TransactionType
     name: string
     amount: number
+    category: TransactionCategory
+    files: File[]
   }) {
     if (!editingTransaction) return
     const updated = await updateTransaction(editingTransaction.id, {
@@ -119,9 +166,15 @@ export default function Home() {
       name: payload.name,
       amount: payload.amount,
       date: editingTransaction.date,
+      category: payload.category,
     })
+    const attachments = await uploadTransactionAttachments(editingTransaction.id, payload.files)
     setTransactions((prev) =>
-      prev.map((t) => (t.id === updated.id ? updated : t))
+      prev.map((t) =>
+        t.id === updated.id
+          ? { ...updated, attachments: [...(updated.attachments ?? []), ...attachments] }
+          : t
+      )
     )
     setIsEditModalOpen(false)
     setEditingTransaction(null)
@@ -150,7 +203,19 @@ export default function Home() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!categoryTouched) setFormCategory(suggestTransactionCategory(formDescription))
+  }, [formDescription, categoryTouched])
+
   const balance = useMemo(() => totalBalance(transactions), [transactions])
+  const monthlyFlowData = useMemo(
+    () => buildMonthlyFlowData(transactions),
+    [transactions]
+  )
+  const typeDistributionData = useMemo(
+    () => buildTypeDistributionData(transactions),
+    [transactions]
+  )
 
   const monthGroups = useMemo(() => {
     const groups = groupTransactionsByMonth(transactions)
@@ -193,14 +258,22 @@ export default function Home() {
       name,
       amount: amountForType(formType, parsed),
       date: todayISO(),
+      category: formCategory,
     }
     setSubmitLoading(true)
     try {
       const created = await createTransaction(payload)
-      setTransactions((prev) => [created, ...prev])
+      const attachments = await uploadTransactionAttachments(created.id, formFiles)
+      setTransactions((prev) => [
+        { ...created, attachments },
+        ...prev,
+      ])
       setFormType('')
       setFormDescription('')
       setFormAmount('')
+      setFormCategory('Outros')
+      setCategoryTouched(false)
+      setFormFiles([])
     } catch (err: unknown) {
       setSubmitError(
         err instanceof Error ? err.message : 'Não foi possível concluir.'
@@ -230,7 +303,7 @@ export default function Home() {
         <Paper color="primary" classname={styles.welcome}>
           <div className={styles.welcomeLeft}>
             <Typography variant="title-lg" color="white" weight="bold">
-              Olá, Joana! :)
+              {user ? `Olá, ${user.name.split(' ')[0]}! :)` : 'Olá!'}
             </Typography>
             <Typography
               variant="body-sm"
@@ -266,6 +339,38 @@ export default function Home() {
           </div>
         </Paper>
 
+        <section className={styles.analytics} aria-label="Análises financeiras">
+          <Paper classname={styles.chartCard}>
+            <Chart
+              title="Receitas x Despesas"
+              type="line"
+              series={[
+                {
+                  name: 'Receitas',
+                  key: 'Receitas',
+                  color: chartTheme.series.receitas,
+                },
+                {
+                  name: 'Despesas',
+                  key: 'Despesas',
+                  color: chartTheme.series.despesas,
+                },
+              ]}
+              axis={{ x: { key: 'name', show: true }, y: { show: true } }}
+              data={monthlyFlowData}
+            />
+          </Paper>
+          <Paper classname={styles.chartCard}>
+            <Chart
+              title="Distribuição por tipo"
+              type="pie"
+              series={[{ name: 'Movimentações', key: 'value' }]}
+              axis={{ x: { show: false }, y: { show: false } }}
+              data={typeDistributionData}
+            />
+          </Paper>
+        </section>
+
         <Paper color="gray" classname={styles.formCard}>
           <form className={styles.formInner} onSubmit={handleNewTransaction}>
             <Typography
@@ -285,6 +390,32 @@ export default function Home() {
                 options={transactionFormOptions}
                 value={formType}
                 onChange={(v) => setFormType(v as TransactionType)}
+                disabled={submitLoading}
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.labelMuted}>Categoria:</label>
+              <Select
+                className={`${styles.selectFull} ${styles.formSelect}`}
+                options={transactionCategories.map((value) => ({ value, label: value }))}
+                value={formCategory}
+                onChange={(value) => {
+                  setCategoryTouched(true)
+                  setFormCategory(value as TransactionCategory)
+                }}
+                disabled={submitLoading}
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.labelMuted} htmlFor="transaction-files">
+                Anexos:
+              </label>
+              <Input
+                id="transaction-files"
+                type="file"
+                accept="application/pdf,image/jpeg,image/png"
+                multiple
+                onChange={(event) => setFormFiles(Array.from(event.target.files ?? []))}
                 disabled={submitLoading}
               />
             </div>
@@ -351,9 +482,27 @@ export default function Home() {
               id: editingTransaction.id,
               type: editingTransaction.type,
               name: editingTransaction.name,
-              amount: editingTransaction.amount,
+                amount: editingTransaction.amount,
+                category: editingTransaction.category,
+                attachments: editingTransaction.attachments,
             }}
             onSubmit={handleEditModalSubmit}
+            onRemoveAttachment={async (attachmentId) => {
+              if (!editingTransaction) return
+              await deleteTransactionAttachment(editingTransaction.id, attachmentId)
+              setTransactions((current) =>
+                current.map((transaction) =>
+                  transaction.id === editingTransaction.id
+                    ? {
+                        ...transaction,
+                        attachments: (transaction.attachments ?? []).filter(
+                          (attachment) => attachment.id !== attachmentId
+                        ),
+                      }
+                    : transaction
+                )
+              )
+            }}
           />
         )}
       </div>
@@ -418,9 +567,9 @@ export default function Home() {
           ))}
 
           <div className={styles.seeMoreWrapper}>
-            <Link href="/transactions" className={styles.seeMoreLink}>
+            <a href="/transactions" className={styles.seeMoreLink}>
               Ver mais
-            </Link>
+            </a>
           </div>
         </Paper>
       </div>

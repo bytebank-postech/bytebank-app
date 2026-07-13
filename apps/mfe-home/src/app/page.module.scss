@@ -30,6 +30,17 @@
   min-width: 0;
 }
 
+.analytics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.chartCard {
+  min-height: 360px;
+  padding: 20px;
+}
+
 .extratoColumn {
   grid-column: 3;
   grid-row: 1 / -1;

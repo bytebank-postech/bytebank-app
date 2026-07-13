@@ -24,9 +24,11 @@ export default function Datepicker({
   )
   return (
     <div className={classNamesContainer}>
-      <label htmlFor={props.id} className={styles.label}>
-        {props.label}
-      </label>
+      {props.label ? (
+        <label htmlFor={props.id} className={styles.label}>
+          {props.label}
+        </label>
+      ) : null}
       <input
         type="date"
         {...props}

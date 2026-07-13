@@ -235,7 +235,7 @@
     "type": "Pix",
     "name": "Pix recebido",
     "amount": 300,
-    "date": "2026-07-12"
+    "date": "2026-07-09"
   },
   {
     "id": "35",
@@ -249,7 +249,7 @@
     "type": "Pagamento",
     "name": "Mercado",
     "amount": -630,
-    "date": "2026-07-15"
+    "date": "2026-07-07"
   },
   {
     "id": "37",
@@ -263,6 +263,6 @@
     "type": "Transferência",
     "name": "Imposto",
     "amount": -1800,
-    "date": "2026-07-25"
+    "date": "2026-07-06"
   }
 ]

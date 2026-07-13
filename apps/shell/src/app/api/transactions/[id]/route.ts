@@ -19,7 +19,7 @@ export async function PUT(request: Request, { params }: Params) {
   const index = transactions.findIndex((t) => t.id === id)
 
   if (index !== -1) {
-    transactions[index] = body
+    transactions[index] = { ...transactions[index], ...body, id }
   } else {
     return NextResponse.json({ error: 'not found' }, { status: 404 })
   }
