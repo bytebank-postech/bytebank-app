@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import jwt from 'jsonwebtoken'
-import { ROUTES, JWT_CONFIG } from '@bytebank/shared'
+import { ROUTES } from '@bytebank/shared'
+import { jwtVerify } from 'jose/jwt/verify'
 
-export function verifyToken(token: string) {
+export async function verifyToken(token: string) {
   try {
-    // TODO ajustar
-    // const decoded = jwt.verify(token, JWT_CONFIG.secret)
-    return true
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+
+    const { payload } = await jwtVerify(token, secret)
+    return payload
   } catch {
     return null
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value
 
   const publicRoutes = Object.values(ROUTES.public)
@@ -25,7 +26,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (isProtectedRoute && token) {
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
     if (!decoded) {
       return NextResponse.redirect(new URL('/auth', request.url))
     }

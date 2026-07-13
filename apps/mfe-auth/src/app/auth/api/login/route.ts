@@ -1,7 +1,6 @@
 import { findUserByEmailAndPassword } from '@/data/users'
-import { JWT_CONFIG } from '@bytebank/shared'
+import { SignJWT } from 'jose'
 import { NextResponse } from 'next/server'
-import jwt from 'jsonwebtoken'
 
 export async function POST(request: Request) {
   try {
@@ -23,9 +22,11 @@ export async function POST(request: Request) {
       email: user.email,
     }
 
-    const token = jwt.sign(userData, JWT_CONFIG.secret, {
-      expiresIn: JWT_CONFIG.expiresIn,
-    })
+    const token = await new SignJWT(userData)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(new TextEncoder().encode(process.env.JWT_SECRET))
 
     const response = NextResponse.json({
       token,
