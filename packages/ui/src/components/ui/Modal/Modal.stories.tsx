@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { Meta, StoryObj } from '@storybook/react-webpack5'
 import Modal from './Modal'
 
 const meta = {
@@ -8,6 +8,9 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  args: {
+    isOpen: true,
+  },
   argTypes: {
     onClose: {
       description: 'Função chamada ao fechar o modal',
