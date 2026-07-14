@@ -18,12 +18,16 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.1",
-    "@storybook/addon-a11y": "^10.3.5",
-    "@storybook/addon-docs": "^10.3.5",
-    "@storybook/nextjs-vite": "^10.3.5",
+    "@storybook/addon-a11y": "10.5.0",
+    "@storybook/addon-docs": "10.5.0",
+    "@storybook/addon-webpack5-compiler-swc": "4.0.3",
+    "@storybook/react-webpack5": "10.5.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "storybook": "^10.3.5",
+    "css-loader": "^7.1.4",
+    "sass-loader": "^17.0.0",
+    "storybook": "10.5.0",
+    "style-loader": "^4.0.0",
     "typescript": "^5"
   }
 }

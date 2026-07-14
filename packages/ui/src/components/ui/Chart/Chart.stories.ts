@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import type { Meta, StoryObj } from '@storybook/react-webpack5'
 import Chart from './Chart'
 import { chartTheme, transactionTypeColors } from './Chart.theme'
 

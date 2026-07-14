@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import type { Meta, StoryObj } from '@storybook/react-webpack5'
 import EditTransactionModal from './EditTransactionModal'
 
 const meta = {

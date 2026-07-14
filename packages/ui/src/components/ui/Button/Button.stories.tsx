@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { Meta, StoryObj } from '@storybook/react-webpack5'
 import Button from './Button'
 import { MdEdit } from 'react-icons/md'
 
