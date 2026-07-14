@@ -18,7 +18,10 @@ const config: StorybookConfig = {
         'style-loader',
         {
           loader: 'css-loader',
-          options: { modules: true },
+          options: {
+            esModule: false,
+            modules: { namedExport: false },
+          },
         },
         'sass-loader',
       ],
