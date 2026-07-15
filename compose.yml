@@ -8,7 +8,7 @@ services:
       - '3000'
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/']
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:3000/']
       interval: 15s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
       - '3000'
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/transactions']
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:3000/transactions']
       interval: 15s
       timeout: 5s
       retries: 5
@@ -41,7 +41,7 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/auth']
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:3000/auth']
       interval: 15s
       timeout: 5s
       retries: 5
@@ -66,7 +66,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-bytebank-local-development-secret}
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/api/health']
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:3000/api/health']
       interval: 15s
       timeout: 5s
       retries: 5
