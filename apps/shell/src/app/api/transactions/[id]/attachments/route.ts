@@ -1,58 +1,52 @@
 import { NextResponse } from 'next/server'
-import { attachments, transactions } from '@/data/inmemory'
+import { NotFoundError, ValidationError } from '@bytebank/application'
+import { createServerTransactionUseCases } from '@bytebank/infrastructure/server'
 
-const acceptedTypes = new Set(['application/pdf', 'image/jpeg', 'image/png'])
-const maxFileSize = 5 * 1024 * 1024
+const useCases = createServerTransactionUseCases()
 
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_request: Request, { params }: Params) {
   const { id } = await params
-  const transaction = transactions.find((item) => item.id === id)
-  if (!transaction) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(transaction.attachments ?? [])
+  try {
+    const attachments = await useCases.listTransactionAttachments.execute(id)
+    return NextResponse.json(attachments)
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    throw error
+  }
 }
 
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params
-  const transaction = transactions.find((item) => item.id === id)
-  if (!transaction) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
   const formData = await request.formData()
-  const files = formData.getAll('files').filter((item): item is File => item instanceof File)
-  if (files.length === 0) {
-    return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 })
-  }
+  const files = formData
+    .getAll('files')
+    .filter((item): item is File => item instanceof File)
 
-  for (const file of files) {
-    if (!acceptedTypes.has(file.type) || file.size > maxFileSize) {
-      return NextResponse.json(
-        { error: 'Envie arquivos PDF, PNG ou JPEG de até 5 MB.' },
-        { status: 400 }
-      )
-    }
-  }
-
-  const created = await Promise.all(
-    files.map(async (file) => {
-      const attachmentId = crypto.randomUUID()
-      const metadata = {
-        id: attachmentId,
+  try {
+    const uploads = await Promise.all(
+      files.map(async (file) => ({
         name: file.name,
         mimeType: file.type,
         size: file.size,
-        url: `/api/transactions/${id}/attachments/${attachmentId}`,
-      }
-      attachments.set(attachmentId, {
-        transactionId: id,
-        name: file.name,
-        mimeType: file.type,
-        content: Buffer.from(await file.arrayBuffer()),
-      })
-      return metadata
-    })
-  )
-
-  transaction.attachments = [...(transaction.attachments ?? []), ...created]
-  return NextResponse.json(created, { status: 201 })
+        content: await file.arrayBuffer(),
+      }))
+    )
+    const created = await useCases.addTransactionAttachments.execute(
+      id,
+      uploads
+    )
+    return NextResponse.json(created, { status: 201 })
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    if (error instanceof ValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    throw error
+  }
 }

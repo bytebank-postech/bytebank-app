@@ -226,12 +226,44 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bytebank/application@workspace:*, @bytebank/application@workspace:packages/application":
+  version: 0.0.0-use.local
+  resolution: "@bytebank/application@workspace:packages/application"
+  dependencies:
+    "@bytebank/domain": "workspace:*"
+    typescript: ^5
+    vitest: ^4.1.3
+  languageName: unknown
+  linkType: soft
+
+"@bytebank/domain@workspace:*, @bytebank/domain@workspace:packages/domain":
+  version: 0.0.0-use.local
+  resolution: "@bytebank/domain@workspace:packages/domain"
+  dependencies:
+    typescript: ^5
+    vitest: ^4.1.3
+  languageName: unknown
+  linkType: soft
+
+"@bytebank/infrastructure@workspace:*, @bytebank/infrastructure@workspace:packages/infrastructure":
+  version: 0.0.0-use.local
+  resolution: "@bytebank/infrastructure@workspace:packages/infrastructure"
+  dependencies:
+    "@bytebank/application": "workspace:*"
+    "@bytebank/domain": "workspace:*"
+    jose: ^6.2.3
+    typescript: ^5
+  languageName: unknown
+  linkType: soft
+
 "@bytebank/shared@workspace:*, @bytebank/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@bytebank/shared@workspace:packages/shared"
   dependencies:
+    "@bytebank/application": "workspace:*"
+    "@bytebank/domain": "workspace:*"
+    "@bytebank/infrastructure": "workspace:*"
     "@reduxjs/toolkit": ^2.12.0
-    jose: ^6.2.3
     react: ^19.2.4
     react-redux: ^9.3.0
   languageName: unknown
@@ -241,6 +273,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bytebank/ui@workspace:packages/ui"
   dependencies:
+    "@bytebank/domain": "workspace:*"
     "@bytebank/shared": "workspace:*"
     "@chromatic-com/storybook": ^5.1.1
     "@storybook/addon-a11y": 10.5.0
@@ -7128,10 +7161,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "mfe-auth@workspace:apps/mfe-auth"
   dependencies:
+    "@bytebank/application": "workspace:*"
+    "@bytebank/infrastructure": "workspace:*"
     "@bytebank/shared": "workspace:*"
     "@bytebank/ui": "workspace:*"
-    "@types/jsonwebtoken": ^9.0.5
-    jsonwebtoken: ^9.0.2
     next: 16.2.1
     react: 19.2.4
     react-dom: 19.2.4
@@ -7143,6 +7176,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "mfe-home@workspace:apps/mfe-home"
   dependencies:
+    "@bytebank/domain": "workspace:*"
+    "@bytebank/infrastructure": "workspace:*"
     "@bytebank/shared": "workspace:*"
     "@bytebank/ui": "workspace:*"
     next: 16.2.1
@@ -7157,6 +7192,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "mfe-transactions@workspace:apps/mfe-transactions"
   dependencies:
+    "@bytebank/domain": "workspace:*"
+    "@bytebank/infrastructure": "workspace:*"
     "@bytebank/shared": "workspace:*"
     "@bytebank/ui": "workspace:*"
     next: 16.2.1
@@ -8862,6 +8899,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "shell@workspace:apps/shell"
   dependencies:
+    "@bytebank/application": "workspace:*"
+    "@bytebank/domain": "workspace:*"
+    "@bytebank/infrastructure": "workspace:*"
     "@bytebank/shared": "workspace:*"
     "@bytebank/ui": "workspace:*"
     next: 16.2.1

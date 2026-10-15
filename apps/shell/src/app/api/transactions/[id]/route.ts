@@ -1,41 +1,41 @@
 import { NextResponse } from 'next/server'
-import { transactions } from '@/data/inmemory'
+import { NotFoundError } from '@bytebank/application'
+import { createServerTransactionUseCases } from '@bytebank/infrastructure/server'
+
+const useCases = createServerTransactionUseCases()
 
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_request: Request, { params }: Params) {
   const { id } = await params
-  const transaction = transactions.find((t) => t.id === id)
-  if (!transaction) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  try {
+    const transaction = await useCases.getTransactionById.execute(id)
+    return NextResponse.json(transaction)
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    throw error
   }
-  return NextResponse.json(transaction)
 }
 
 export async function PUT(request: Request, { params }: Params) {
   const { id } = await params
   const body = await request.json()
 
-  const index = transactions.findIndex((t) => t.id === id)
-
-  if (index !== -1) {
-    transactions[index] = { ...transactions[index], ...body, id }
-  } else {
-    return NextResponse.json({ error: 'not found' }, { status: 404 })
+  try {
+    const updated = await useCases.updateTransaction.execute(id, body)
+    return NextResponse.json(updated)
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: 'not found' }, { status: 404 })
+    }
+    throw error
   }
-
-  const updated = transactions.find((t) => t.id === id)
-  console.debug(`content: ${updated}`)
-  return NextResponse.json(updated)
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
   const { id } = await params
-  const index = transactions.findIndex((t) => t.id === id)
-
-  if (index !== -1) {
-    transactions.splice(index, 1)
-  }
-
+  await useCases.deleteTransaction.execute(id)
   return NextResponse.json({ message: 'Deleted' })
 }

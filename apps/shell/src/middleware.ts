@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAuthToken } from '@bytebank/shared'
+import { createTokenService } from '@bytebank/infrastructure/server'
+
+const tokenService = createTokenService()
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value
@@ -8,7 +10,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth', request.url))
   }
 
-  const user = await verifyAuthToken(token)
+  const user = await tokenService.verify(token)
   if (!user) {
     const response = NextResponse.redirect(new URL('/auth', request.url))
     response.cookies.delete('auth-token')

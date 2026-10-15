@@ -1,10 +1,14 @@
-import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import {
-  getTransactionPage,
-  type TransactionPage,
-  type TransactionPageFilters,
-} from '../services/transactions'
-import type { Transaction, TransactionType } from '../types/transaction'
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from '@reduxjs/toolkit'
+import type {
+  TransactionPage,
+  TransactionPageFilters,
+} from '@bytebank/application'
+import type { Transaction, TransactionType } from '@bytebank/domain'
+import { createClientTransactionUseCases } from '@bytebank/infrastructure/client'
 
 export type TransactionFilters = {
   search: string
@@ -42,9 +46,13 @@ function toRequest(filters: TransactionFilters): TransactionPageFilters {
   }
 }
 
-export const loadTransactions = createAsyncThunk<TransactionPage, TransactionFilters>(
-  'transactions/load',
-  (filters) => getTransactionPage(toRequest(filters))
+const transactionUseCases = createClientTransactionUseCases()
+
+export const loadTransactions = createAsyncThunk<
+  TransactionPage,
+  TransactionFilters
+>('transactions/load', (filters) =>
+  transactionUseCases.getTransactionPage.execute(toRequest(filters))
 )
 
 const transactionsSlice = createSlice({
@@ -70,7 +78,9 @@ const transactionsSlice = createSlice({
       state.filters = { ...initialState.filters }
     },
     removeTransactions(state, action: PayloadAction<string[]>) {
-      state.items = state.items.filter((item) => !action.payload.includes(item.id))
+      state.items = state.items.filter(
+        (item) => !action.payload.includes(item.id)
+      )
       state.total = Math.max(0, state.total - action.payload.length)
     },
     replaceTransaction(state, action: PayloadAction<Transaction>) {

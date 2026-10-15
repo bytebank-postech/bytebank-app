@@ -2,24 +2,35 @@ import { useAuth } from '@bytebank/shared'
 import { useEffect, useState } from 'react'
 
 export default function useLoginPage() {
-  const { login, error, loading, isAuthenticated } = useAuth()
+  const { login, isAuthenticated, loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (isAuthenticated) window.location.assign('/')
-  }, [isAuthenticated])
+    if (!authLoading && isAuthenticated) {
+      window.location.assign('/')
+    }
+  }, [authLoading, isAuthenticated])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setMessage('')
+    setError('')
 
+    if (!email.trim() || !password) {
+      setError('Preencha e-mail e senha.')
+      return
+    }
+
+    setSubmitting(true)
     try {
       await login(email, password)
       window.location.assign('/')
-    } catch {
-      setMessage('Não foi possível entrar. Verifique seus dados.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao entrar.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -28,9 +39,8 @@ export default function useLoginPage() {
     setEmail,
     password,
     setPassword,
-    message,
-    loading,
     error,
+    submitting,
     handleSubmit,
   }
 }

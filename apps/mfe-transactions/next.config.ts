@@ -5,11 +5,15 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   basePath: '/transactions',
   assetPrefix: '/transactions-assets',
-  transpilePackages: ['@bytebank/ui', '@bytebank/shared'],
+  transpilePackages: [
+    '@bytebank/ui',
+    '@bytebank/shared',
+    '@bytebank/domain',
+    '@bytebank/application',
+    '@bytebank/infrastructure',
+  ],
   sassOptions: {
-    loadPaths: [
-      path.resolve(__dirname, '../../packages/ui/src/styles'),
-    ],
+    loadPaths: [path.resolve(__dirname, '../../packages/ui/src/styles')],
   },
 }
 
