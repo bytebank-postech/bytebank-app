@@ -17,22 +17,28 @@ import {
   EditTransactionModal,
 } from '@bytebank/ui'
 import { MdOpenInFull, MdVisibility, MdVisibilityOff } from 'react-icons/md'
-import type { Transaction, TransactionCategory, TransactionType } from '@bytebank/shared'
+import type {
+  Transaction,
+  TransactionCategory,
+  TransactionType,
+} from '@bytebank/domain'
 import {
+  amountForType,
   formatDisplayDate,
   groupTransactionsByMonth,
-  totalBalance,
-  createTransaction,
-  getTransactions,
-  updateTransaction,
-  deleteTransaction,
-  useAuth,
+  parseBRLAmount,
   suggestTransactionCategory,
+  totalBalance,
   transactionCategories,
-  uploadTransactionAttachments,
-  deleteTransactionAttachment,
-} from '@bytebank/shared'
+} from '@bytebank/domain'
+import {
+  createClientTransactionUseCases,
+  filesToAttachmentUploads,
+} from '@bytebank/infrastructure/client'
+import { useAuth } from '@bytebank/shared'
 import styles from './page.module.scss'
+
+const transactionUseCases = createClientTransactionUseCases()
 
 const transactionFormOptions: { value: TransactionType; label: string }[] = (
   [
@@ -42,17 +48,6 @@ const transactionFormOptions: { value: TransactionType; label: string }[] = (
     'Pagamento',
   ] as const satisfies readonly TransactionType[]
 ).map((value) => ({ value, label: value }))
-
-function parseBRLAmount(raw: string): number | null {
-  const s0 = raw.trim()
-  if (!s0) return null
-  // Remove tudo que não seja dígito, vírgula, ponto ou sinal
-  const cleaned = s0.replace(/[^0-9,.-]/g, '')
-  if (!cleaned) return null
-  const normalized = cleaned.replace(/\./g, '').replace(',', '.')
-  const n = Number(normalized)
-  return Number.isFinite(n) ? n : null
-}
 
 function digitsOnly(raw: string): string {
   return raw.replace(/\D/g, '')
@@ -67,11 +62,6 @@ function formatBRLFromDigits(raw: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
-}
-
-function amountForType(type: TransactionType, absolute: number): number {
-  if (type === 'Depósito' || type === 'Pix') return Math.abs(absolute)
-  return -Math.abs(absolute)
 }
 
 function todayISO(): string {
@@ -136,7 +126,8 @@ export default function Home() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [formType, setFormType] = useState<TransactionType | ''>('')
   const [formDescription, setFormDescription] = useState('')
-  const [formCategory, setFormCategory] = useState<TransactionCategory>('Outros')
+  const [formCategory, setFormCategory] =
+    useState<TransactionCategory>('Outros')
   const [categoryTouched, setCategoryTouched] = useState(false)
   const [formFiles, setFormFiles] = useState<File[]>([])
   const [formAmount, setFormAmount] = useState('')
@@ -162,19 +153,31 @@ export default function Home() {
     files: File[]
   }) {
     if (!editingTransaction) return
-    const updated = await updateTransaction(editingTransaction.id, {
-      id: editingTransaction.id,
-      type: payload.type,
-      name: payload.name,
-      amount: payload.amount,
-      date: editingTransaction.date,
-      category: payload.category,
-    })
-    const attachments = await uploadTransactionAttachments(editingTransaction.id, payload.files)
+    const updated = await transactionUseCases.updateTransaction.execute(
+      editingTransaction.id,
+      {
+        id: editingTransaction.id,
+        type: payload.type,
+        name: payload.name,
+        amount: payload.amount,
+        date: editingTransaction.date,
+        category: payload.category,
+      }
+    )
+    const attachments =
+      payload.files.length > 0
+        ? await transactionUseCases.addTransactionAttachments.execute(
+            editingTransaction.id,
+            await filesToAttachmentUploads(payload.files)
+          )
+        : []
     setTransactions((prev) =>
       prev.map((t) =>
         t.id === updated.id
-          ? { ...updated, attachments: [...(updated.attachments ?? []), ...attachments] }
+          ? {
+              ...updated,
+              attachments: [...(updated.attachments ?? []), ...attachments],
+            }
           : t
       )
     )
@@ -185,7 +188,8 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false
     setLoadState('loading')
-    getTransactions()
+    transactionUseCases.listTransactions
+      .execute()
       .then((data) => {
         if (!cancelled) {
           setTransactions(data)
@@ -206,7 +210,8 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    if (!categoryTouched) setFormCategory(suggestTransactionCategory(formDescription))
+    if (!categoryTouched)
+      setFormCategory(suggestTransactionCategory(formDescription))
   }, [formDescription, categoryTouched])
 
   const balance = useMemo(() => totalBalance(transactions), [transactions])
@@ -264,12 +269,16 @@ export default function Home() {
     }
     setSubmitLoading(true)
     try {
-      const created = await createTransaction(payload)
-      const attachments = await uploadTransactionAttachments(created.id, formFiles)
-      setTransactions((prev) => [
-        { ...created, attachments },
-        ...prev,
-      ])
+      const created =
+        await transactionUseCases.createTransaction.execute(payload)
+      const attachments =
+        formFiles.length > 0
+          ? await transactionUseCases.addTransactionAttachments.execute(
+              created.id,
+              await filesToAttachmentUploads(formFiles)
+            )
+          : []
+      setTransactions((prev) => [{ ...created, attachments }, ...prev])
       setFormType('')
       setFormDescription('')
       setFormAmount('')
@@ -288,7 +297,7 @@ export default function Home() {
   async function handleDelete(id: string) {
     if (!window.confirm('Excluir esta transação?')) return
     try {
-      await deleteTransaction(id)
+      await transactionUseCases.deleteTransaction.execute(id)
       setTransactions((prev) => prev.filter((t) => t.id !== id))
     } catch {
       window.alert('Não foi possível excluir.')
@@ -461,7 +470,10 @@ export default function Home() {
               <label className={styles.labelMuted}>Categoria:</label>
               <Select
                 className={`${styles.selectFull} ${styles.formSelect}`}
-                options={transactionCategories.map((value) => ({ value, label: value }))}
+                options={transactionCategories.map((value) => ({
+                  value,
+                  label: value,
+                }))}
                 value={formCategory}
                 onChange={(value) => {
                   setCategoryTouched(true)
@@ -479,7 +491,9 @@ export default function Home() {
                 type="file"
                 accept="application/pdf,image/jpeg,image/png"
                 multiple
-                onChange={(event) => setFormFiles(Array.from(event.target.files ?? []))}
+                onChange={(event) =>
+                  setFormFiles(Array.from(event.target.files ?? []))
+                }
                 disabled={submitLoading}
               />
             </div>
@@ -546,14 +560,17 @@ export default function Home() {
               id: editingTransaction.id,
               type: editingTransaction.type,
               name: editingTransaction.name,
-                amount: editingTransaction.amount,
-                category: editingTransaction.category,
-                attachments: editingTransaction.attachments,
+              amount: editingTransaction.amount,
+              category: editingTransaction.category,
+              attachments: editingTransaction.attachments,
             }}
             onSubmit={handleEditModalSubmit}
             onRemoveAttachment={async (attachmentId) => {
               if (!editingTransaction) return
-              await deleteTransactionAttachment(editingTransaction.id, attachmentId)
+              await transactionUseCases.removeTransactionAttachment.execute(
+                editingTransaction.id,
+                attachmentId
+              )
               setTransactions((current) =>
                 current.map((transaction) =>
                   transaction.id === editingTransaction.id

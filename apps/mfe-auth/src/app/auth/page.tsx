@@ -1,7 +1,9 @@
 'use client'
 
+import Link from 'next/link'
 import { Button, Input, Typography } from '@bytebank/ui'
-import styles from './page.module.scss'
+import AuthLayout from '../../components/auth/AuthLayout'
+import layoutStyles from '../../components/auth/AuthLayout.module.scss'
 import useLoginPage from './useLoginPage'
 
 export default function AuthPage() {
@@ -10,55 +12,69 @@ export default function AuthPage() {
     setEmail,
     password,
     setPassword,
-    message,
-    loading,
     error,
+    submitting,
     handleSubmit,
   } = useLoginPage()
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.header}>
-          <Typography variant="title">Bem-vindo de volta</Typography>
-          <Typography variant="title-lg">Acesse sua conta</Typography>
-          <Typography variant="body">
-            Entre com seu e-mail e senha para continuar no ByteBank.
+    <AuthLayout
+      title="Entrar"
+      subtitle="Acesse sua conta ByteBank"
+      footer={
+        <>
+          <Typography variant="body-sm" classname={layoutStyles.footerMuted}>
+            Não tem uma conta?
           </Typography>
-        </div>
-
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <label className={styles.field}>
-            <Typography color="active">E-mail</Typography>
-            <Input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="seu@email.com"
-            />
-          </label>
-
-          <label className={styles.field}>
-            <Typography color="active">Senha</Typography>
-            <Input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-            />
-          </label>
-
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
-          </Button>
-        </form>
-
-        {(error || message) && (
-          <Typography color="error" classname={styles.error}>
-            {error ?? message}
+          <Link href="/auth/cadastro" className={layoutStyles.footerAction}>
+            Criar conta
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className={layoutStyles.form}>
+        <label className={layoutStyles.field}>
+          <Typography variant="title" color="active">
+            E-mail
           </Typography>
-        )}
-      </section>
-    </main>
+          <Input
+            fullWidth
+            paddingSize="large"
+            type="email"
+            autoComplete="email"
+            placeholder="Digite seu e-mail"
+            value={email}
+            disabled={submitting}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </label>
+
+        <label className={layoutStyles.field}>
+          <Typography variant="title" color="active">
+            Senha
+          </Typography>
+          <Input
+            fullWidth
+            paddingSize="large"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Digite sua senha"
+            value={password}
+            disabled={submitting}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </label>
+
+        {error ? (
+          <Typography variant="body-sm" color="error">
+            {error}
+          </Typography>
+        ) : null}
+
+        <Button type="submit" fullWidth size="large" disabled={submitting}>
+          {submitting ? 'Entrando...' : 'Entrar'}
+        </Button>
+      </form>
+    </AuthLayout>
   )
 }

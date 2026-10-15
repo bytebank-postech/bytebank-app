@@ -7,16 +7,20 @@ um design system documentado no Storybook.
 ## Arquitetura
 
 O `shell` é a entrada pública: mantém a API mock, valida a sessão e encaminha
-rotas aos MFEs por rewrites do Next.js.
+rotas aos MFEs por rewrites do Next.js. O domínio e os casos de uso seguem
+Clean Architecture — detalhes em [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-| Módulo | Porta local | Responsabilidade |
-| --- | ---: | --- |
-| `shell` | 3000 | Gateway, JWT e API de transações |
-| `mfe-home` | 3001 | Home, saldo, extrato, criação e gráficos |
-| `mfe-transactions` | 3002 | Busca, filtros, paginação, edição e anexos |
-| `mfe-auth` | 3003 | Login, logout e sessão |
-| `@bytebank/ui` | 6006 | Design system e Storybook |
-| `@bytebank/shared` | — | Tipos, serviços e utilitários compartilhados |
+| Módulo                     | Porta local | Responsabilidade                                |
+| -------------------------- | ----------: | ----------------------------------------------- |
+| `shell`                    |        3000 | Gateway, JWT e API de transações                |
+| `mfe-home`                 |        3001 | Home, saldo, extrato, criação e gráficos        |
+| `mfe-transactions`         |        3002 | Busca, filtros, paginação, edição e anexos      |
+| `mfe-auth`                 |        3003 | Login, logout e sessão                          |
+| `@bytebank/ui`             |        6006 | Design system e Storybook                       |
+| `@bytebank/shared`         |           — | Auth React, Redux e utilitários de apresentação |
+| `@bytebank/domain`         |           — | Entidades e regras de negócio                   |
+| `@bytebank/application`    |           — | Ports e use cases                               |
+| `@bytebank/infrastructure` |           — | Adapters HTTP, in-memory e JWT                  |
 
 Rotas públicas: `/`, `/transactions`, `/auth` e `/api/transactions`.
 
@@ -42,7 +46,7 @@ corepack yarn dev
 Abra `http://localhost:3000`. O Turbo inicia todos os MFEs; as portas internas
 estão descritas na tabela de arquitetura.
 
-Credenciais de demonstração:
+Credenciais de demonstração (ou crie uma conta em `/auth/cadastro`):
 
 ```text
 E-mail: usuario@bytebank.com
@@ -113,6 +117,14 @@ apps/
   mfe-transactions/     # listagem e gestão de transações
   mfe-auth/             # autenticação
 packages/
+  domain/               # entidades e regras puras
+  application/          # ports e use cases
+  infrastructure/       # adapters (HTTP, in-memory, JWT)
   ui/                   # design system e Storybook
-  shared/               # contratos e serviços compartilhados
+  shared/               # Auth, Redux e utilitários de apresentação
+```
+
+```bash
+corepack yarn workspace @bytebank/domain test
+corepack yarn workspace @bytebank/application test
 ```

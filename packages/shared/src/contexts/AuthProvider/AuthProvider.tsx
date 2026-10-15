@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { FullScreenDiv, Loader } from '@bytebank/ui'
 
 type User = {
   id: string
@@ -17,17 +16,19 @@ type AuthContextType = {
   loading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
 const AUTH_API_URL = '/auth/api/login'
+const REGISTER_API_URL = '/auth/api/register'
 const LOGOUT_API_URL = '/auth/api/logout'
 const SESSION_API_URL = '/auth/api/session'
 
-async function authenticate(email: string, password: string) {
-  const response = await fetch(AUTH_API_URL, {
+async function postAuth(url: string, email: string, password: string) {
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -63,6 +64,10 @@ async function getSession(): Promise<User> {
   return data.user ?? null
 }
 
+function isAuthPublicPath(pathname: string) {
+  return pathname === '/auth' || pathname.startsWith('/auth/')
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null)
   const [loading, setLoading] = useState(true)
@@ -88,12 +93,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
-      const { user } = await authenticate(email, password)
+      const { user } = await postAuth(AUTH_API_URL, email, password)
+      setUser(user)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Falha ao entrar.'
+      setError(message)
+      setUser(null)
+      throw new Error(message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
+  const register = async (email: string, password: string) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { user } = await postAuth(REGISTER_API_URL, email, password)
       setUser(user)
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Usuário ou senha inválidos'
+        err instanceof Error ? err.message : 'Falha ao criar conta.'
       setError(message)
       setUser(null)
       throw new Error(message)
@@ -114,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       login,
+      register,
       logout,
     }),
     [user, loading, error]
@@ -141,20 +163,38 @@ export function AuthGuard({ children }: { children: ReactNode }) {
       return
     }
 
-    if (!isAuthenticated && pathname !== '/auth') {
+    if (!isAuthenticated && !isAuthPublicPath(pathname)) {
       window.location.assign('/auth')
     }
 
-    if (isAuthenticated && pathname === '/auth') {
+    if (isAuthenticated && isAuthPublicPath(pathname)) {
       window.location.assign('/')
     }
   }, [isAuthenticated, loading, pathname])
 
   if (loading || !isAuthenticated) {
     return (
-      <FullScreenDiv>
-        <Loader />
-      </FullScreenDiv>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#f5f5f5',
+        }}
+      >
+        <div
+          aria-label="Carregando"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            border: '3px solid #d0d0d0',
+            borderTopColor: '#004d61',
+            animation: 'bytebank-auth-spin 0.8s linear infinite',
+          }}
+        />
+        <style>{`@keyframes bytebank-auth-spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
     )
   }
 

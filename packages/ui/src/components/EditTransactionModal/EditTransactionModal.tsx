@@ -4,11 +4,13 @@ import Modal from '../ui/Modal/Modal'
 import { Input, Select, Typography, Button } from '../ui'
 import styles from './EditTransactionModal.module.scss'
 import {
+  amountForType,
+  parseBRLAmount,
   transactionCategories,
   type TransactionAttachment,
   type TransactionCategory,
   type TransactionType,
-} from '@bytebank/shared'
+} from '@bytebank/domain'
 import { useState } from 'react'
 
 function digitsOnly(raw: string): string {
@@ -24,21 +26,6 @@ function formatBRLFromDigits(raw: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
-}
-
-function parseBRLAmount(raw: string): number | null {
-  const s0 = raw.trim()
-  if (!s0) return null
-  const cleaned = s0.replace(/[^0-9,.-]/g, '')
-  if (!cleaned) return null
-  const normalized = cleaned.replace(/\./g, '').replace(',', '.')
-  const n = Number(normalized)
-  return Number.isFinite(n) ? n : null
-}
-
-function amountForType(type: TransactionType, absolute: number): number {
-  if (type === 'Depósito' || type === 'Pix') return Math.abs(absolute)
-  return -Math.abs(absolute)
 }
 
 interface Props {
@@ -146,7 +133,10 @@ export default function EditTransactionModal({
           <span className={styles.labelMuted}>Categoria:</span>
           <Select
             className={`${styles.selectFull} ${styles.formSelect}`}
-            options={transactionCategories.map((value) => ({ value, label: value }))}
+            options={transactionCategories.map((value) => ({
+              value,
+              label: value,
+            }))}
             value={category}
             onChange={(value) => setCategory(value as TransactionCategory)}
             disabled={loading}

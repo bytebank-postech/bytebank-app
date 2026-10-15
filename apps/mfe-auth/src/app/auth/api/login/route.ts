@@ -1,32 +1,22 @@
-import { findUserByEmailAndPassword } from '@/data/users'
-import { signAuthToken } from '@bytebank/shared'
+import { InvalidCredentialsError, ValidationError } from '@bytebank/application'
+import { createAuthUseCases } from '@bytebank/infrastructure/server'
 import { NextResponse } from 'next/server'
+
+const authUseCases = createAuthUseCases()
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { email, password } = body as { email?: string; password?: string }
 
-    const user = findUserByEmailAndPassword(email, password)
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Credenciais inválidas' },
-        { status: 401 }
-      )
-    }
-
-    const userData = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    }
-
-    const token = await signAuthToken(userData)
+    const { user, token } = await authUseCases.loginUser.execute(
+      email ?? '',
+      password ?? ''
+    )
 
     const response = NextResponse.json({
       token,
-      user: userData,
+      user,
     })
 
     response.cookies.set('auth-token', token, {
@@ -34,11 +24,20 @@ export async function POST(request: Request) {
       secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'lax',
       path: '/',
-      maxAge: 24 * 60 * 60, // 24 horas
+      maxAge: 24 * 60 * 60,
     })
 
     return response
-  } catch {
-    return NextResponse.json({ error: 'Requisição inválida' }, { status: 400 })
+  } catch (error) {
+    if (error instanceof InvalidCredentialsError) {
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
+    if (error instanceof ValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    return NextResponse.json(
+      { error: 'Não foi possível concluir a autenticação.' },
+      { status: 400 }
+    )
   }
 }

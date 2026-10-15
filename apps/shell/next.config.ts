@@ -8,7 +8,13 @@ const mfeAuthUrl = process.env.MFE_AUTH_URL ?? 'http://localhost:3003'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  transpilePackages: ['@bytebank/ui', '@bytebank/shared'],
+  transpilePackages: [
+    '@bytebank/ui',
+    '@bytebank/shared',
+    '@bytebank/domain',
+    '@bytebank/application',
+    '@bytebank/infrastructure',
+  ],
   sassOptions: {
     loadPaths: [path.resolve(__dirname, '../../packages/ui/src/styles')],
   },

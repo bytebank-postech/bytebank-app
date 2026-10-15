@@ -1,7 +1,7 @@
-import type { TransactionType } from '@bytebank/shared'
+import type { TransactionType } from '@bytebank/domain'
 
 export const chartTheme = {
-  fontFamily: 'Inter, sans-serif',
+  fontFamily: 'Helvetica, Arial, sans-serif',
   fontSize: {
     sm: 12,
     md: 14,

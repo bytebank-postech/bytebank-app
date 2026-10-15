@@ -13,31 +13,49 @@ import {
   Datepicker,
   Pagination,
 } from '@bytebank/ui'
-import type { Transaction, TransactionCategory, TransactionType } from '@bytebank/shared'
+import type {
+  Transaction,
+  TransactionCategory,
+  TransactionType,
+} from '@bytebank/domain'
+import {
+  amountForType,
+  formatDisplayDate,
+  groupTransactionsByMonth,
+  parseBRLAmount,
+} from '@bytebank/domain'
+import {
+  createClientTransactionUseCases,
+  filesToAttachmentUploads,
+} from '@bytebank/infrastructure/client'
+import {
+  clearFilters,
+  loadTransactions,
+  removeTransactions,
+  replaceTransaction,
+  setMonth,
+  setPage,
+  setSearch,
+  setType,
+  useAppDispatch,
+  useAppSelector,
+} from '@bytebank/shared'
 import { MdDelete, MdFilterAltOff, MdManageSearch } from 'react-icons/md'
-// helpers for BRL formatting/parsing (same behaviour as home page)
-function parseBRLAmount(raw: string): number | null {
-  const s0 = raw.trim()
-  if (!s0) return null
-  const cleaned = s0.replace(/[^0-9,.-]/g, '')
-  if (!cleaned) return null
-  const normalized = cleaned.replace(/\./g, '').replace(',', '.')
-  const n = Number(normalized)
-  return Number.isFinite(n) ? n : null
-}
+import styles from './page.module.scss'
+
+const transactionUseCases = createClientTransactionUseCases()
 
 export const mapToSelectOptions = () => {
-
-  const TRANSACTION_TYPES   = [
+  const TRANSACTION_TYPES = [
     'Todos',
-    'Transferência', 
-    'Pagamento', 
-    'Depósito', 
-    'Pix'
-  ];
+    'Transferência',
+    'Pagamento',
+    'Depósito',
+    'Pix',
+  ]
 
-  return TRANSACTION_TYPES.map(type => ({label: type, value: type }));
-};
+  return TRANSACTION_TYPES.map((type) => ({ label: type, value: type }))
+}
 
 function digitsOnly(raw: string): string {
   return raw.replace(/\D/g, '')
@@ -54,35 +72,22 @@ function formatBRLFromDigits(raw: string): string {
   })
 }
 
-function amountForType(type: TransactionType, absolute: number): number {
-  if (type === 'Depósito' || type === 'Pix') return Math.abs(absolute)
-  return -Math.abs(absolute)
-}
-import {
-  formatDisplayDate,
-  groupTransactionsByMonth,
-  deleteTransaction,
-  updateTransaction,
-  uploadTransactionAttachments,
-  deleteTransactionAttachment,
-  clearFilters,
-  loadTransactions,
-  removeTransactions,
-  replaceTransaction,
-  setMonth,
-  setPage,
-  setSearch,
-  setType,
-  useAppDispatch,
-  useAppSelector,
-} from '@bytebank/shared'
-import styles from './page.module.scss'
-
 export default function TransactionsPage() {
   const dispatch = useAppDispatch()
-  const { items: transactions, total: totalItems, totalPages, status: loadState, error: loadError, filters } =
-    useAppSelector((state) => state.transactions)
-  const { search: searchTerm, type: selectedType, month: selectedMonth, page } = filters
+  const {
+    items: transactions,
+    total: totalItems,
+    totalPages,
+    status: loadState,
+    error: loadError,
+    filters,
+  } = useAppSelector((state) => state.transactions)
+  const {
+    search: searchTerm,
+    type: selectedType,
+    month: selectedMonth,
+    page,
+  } = filters
   const [isSearchActive, setIsSearchActive] = useState(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -136,7 +141,6 @@ export default function TransactionsPage() {
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
-
 
   useEffect(() => {
     void dispatch(loadTransactions(filters))
@@ -192,7 +196,9 @@ export default function TransactionsPage() {
     if (!window.confirm(`Excluir ${ids.length} transação(ões) selecionada(s)?`))
       return
     try {
-      await Promise.all(ids.map((id) => deleteTransaction(id)))
+      await Promise.all(
+        ids.map((id) => transactionUseCases.deleteTransaction.execute(id))
+      )
       dispatch(removeTransactions(ids))
       setSelectedIds({})
       setBulkDeleteMode(false)
@@ -218,7 +224,7 @@ export default function TransactionsPage() {
   async function handleDelete(id: string) {
     if (!window.confirm('Excluir esta transação?')) return
     try {
-      await deleteTransaction(id)
+      await transactionUseCases.deleteTransaction.execute(id)
       dispatch(removeTransactions([id]))
     } catch {
       window.alert('Não foi possível excluir.')
@@ -264,7 +270,10 @@ export default function TransactionsPage() {
     }
     setEditLoading(true)
     try {
-      const updated = await updateTransaction(editingTransaction.id, payload)
+      const updated = await transactionUseCases.updateTransaction.execute(
+        editingTransaction.id,
+        payload
+      )
       dispatch(replaceTransaction(updated))
       setIsEditModalOpen(false)
       setEditingTransaction(null)
@@ -292,15 +301,24 @@ export default function TransactionsPage() {
     setEditLoading(true)
     setEditError(null)
     try {
-      const updated = await updateTransaction(editingTransaction.id, {
-        id: editingTransaction.id,
-        type: payload.type,
-        name: payload.name,
-        amount: payload.amount,
-        date: editingTransaction.date,
-        category: payload.category,
-      })
-      const attachments = await uploadTransactionAttachments(editingTransaction.id, payload.files)
+      const updated = await transactionUseCases.updateTransaction.execute(
+        editingTransaction.id,
+        {
+          id: editingTransaction.id,
+          type: payload.type,
+          name: payload.name,
+          amount: payload.amount,
+          date: editingTransaction.date,
+          category: payload.category,
+        }
+      )
+      const attachments =
+        payload.files.length > 0
+          ? await transactionUseCases.addTransactionAttachments.execute(
+              editingTransaction.id,
+              await filesToAttachmentUploads(payload.files)
+            )
+          : []
       dispatch(
         replaceTransaction({
           ...updated,
@@ -334,7 +352,6 @@ export default function TransactionsPage() {
               Transações
             </Typography>
             <div className={styles.actions}>
-              
               <div className={styles.filterControls}>
                 <Select
                   options={mapToSelectOptions()}
@@ -357,7 +374,7 @@ export default function TransactionsPage() {
                   }}
                 />
               </div>
-              
+
               {isSearchActive && (
                 <div className={styles.searchBar}>
                   <Input
@@ -374,9 +391,13 @@ export default function TransactionsPage() {
                 variant="rounded"
                 icon={<MdManageSearch size={20} />}
                 onClick={toggleSearch}
-                aria-label={isSearchActive ? 'Limpar filtro' : 'Buscar transações'}
+                aria-label={
+                  isSearchActive ? 'Limpar filtro' : 'Buscar transações'
+                }
               />
-              {(searchTerm || selectedType !== 'Todos' || selectedMonth !== 'Todos') && (
+              {(searchTerm ||
+                selectedType !== 'Todos' ||
+                selectedMonth !== 'Todos') && (
                 <Button
                   variant="rounded"
                   icon={<MdFilterAltOff size={20} />}
@@ -493,19 +514,22 @@ export default function TransactionsPage() {
                 category: editingTransaction.category,
                 attachments: editingTransaction.attachments,
               }}
-            onSubmit={handleEditModalSubmit}
-            onRemoveAttachment={async (attachmentId) => {
-              if (!editingTransaction) return
-              await deleteTransactionAttachment(editingTransaction.id, attachmentId)
-              dispatch(
-                replaceTransaction({
-                  ...editingTransaction,
-                  attachments: (editingTransaction.attachments ?? []).filter(
-                    (attachment) => attachment.id !== attachmentId
-                  ),
-                })
-              )
-            }}
+              onSubmit={handleEditModalSubmit}
+              onRemoveAttachment={async (attachmentId) => {
+                if (!editingTransaction) return
+                await transactionUseCases.removeTransactionAttachment.execute(
+                  editingTransaction.id,
+                  attachmentId
+                )
+                dispatch(
+                  replaceTransaction({
+                    ...editingTransaction,
+                    attachments: (editingTransaction.attachments ?? []).filter(
+                      (attachment) => attachment.id !== attachmentId
+                    ),
+                  })
+                )
+              }}
             />
           )}
         </Paper>
