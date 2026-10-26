@@ -1,6 +1,6 @@
 'use client'
 
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import styles from './Select.module.scss'
 import { SelectProps } from './Select.types'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'

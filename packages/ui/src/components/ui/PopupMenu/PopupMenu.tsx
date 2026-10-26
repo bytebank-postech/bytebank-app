@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { TbDotsVertical } from 'react-icons/tb'
 import styles from './PopupMenu.module.scss'
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 
 export type PopupMenuItem = {
   id: string

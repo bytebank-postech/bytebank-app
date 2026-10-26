@@ -1,4 +1,4 @@
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import styles from './Divider.module.scss'
 import { DividerProps } from './Divider.types'
 

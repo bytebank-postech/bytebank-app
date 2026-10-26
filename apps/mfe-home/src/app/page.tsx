@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import {
   Button,
@@ -22,25 +22,19 @@ import type {
   TransactionCategory,
   TransactionType,
 } from '@bytebank/domain'
+import { formatDisplayDate, transactionCategories } from '@bytebank/domain'
 import {
-  amountForType,
-  formatDisplayDate,
-  groupTransactionsByMonth,
-  parseBRLAmount,
-  suggestTransactionCategory,
-  totalBalance,
-  transactionCategories,
-} from '@bytebank/domain'
-import {
-  createClientTransactionUseCases,
-  filesToAttachmentUploads,
-} from '@bytebank/infrastructure/client'
-import { useAuth } from '@bytebank/shared'
+  toError,
+  useAuth,
+  useBalanceVisibility,
+  useDashboardAnalytics,
+  useTransactionCollection,
+  useTransactionMutations,
+} from '@bytebank/shared'
+import { useNewTransactionForm } from '../hooks/useNewTransactionForm'
 import styles from './page.module.scss'
 
-const transactionUseCases = createClientTransactionUseCases()
-
-const transactionFormOptions: { value: TransactionType; label: string }[] = (
+const TRANSACTION_FORM_OPTIONS: { value: TransactionType; label: string }[] = (
   [
     'Depósito',
     'Pix',
@@ -49,260 +43,178 @@ const transactionFormOptions: { value: TransactionType; label: string }[] = (
   ] as const satisfies readonly TransactionType[]
 ).map((value) => ({ value, label: value }))
 
-function digitsOnly(raw: string): string {
-  return raw.replace(/\D/g, '')
+const CATEGORY_OPTIONS = transactionCategories.map((value) => ({
+  value,
+  label: value,
+}))
+
+function formatHeaderDate(date = new Date()): string {
+  const weekday = date.toLocaleDateString('pt-BR', { weekday: 'long' })
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day}/${month}/${date.getFullYear()}`
 }
 
-function formatBRLFromDigits(raw: string): string {
-  const digits = digitsOnly(raw)
-  if (!digits) return ''
-  const cents = Number(digits)
-  const value = cents / 100
-  return value.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+const MONTHLY_FLOW_SERIES = [
+  { name: 'Receitas', key: 'Receitas', color: chartTheme.series.receitas },
+  { name: 'Despesas', key: 'Despesas', color: chartTheme.series.despesas },
+]
+
+const MONTHLY_FLOW_AXIS = {
+  x: { key: 'name', show: true },
+  y: { show: true },
 }
 
-function todayISO(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+const TYPE_DISTRIBUTION_SERIES = [{ name: 'Movimentações', key: 'value' }]
+
+const TYPE_DISTRIBUTION_AXIS = { x: { show: false }, y: { show: false } }
+
+type StatementRowProps = {
+  transaction: Transaction
+  onEdit: (transaction: Transaction) => void
+  onDelete: (id: string) => void
 }
 
-function formatHeaderDate(d = new Date()): string {
-  const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' })
-  const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1)
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const year = d.getFullYear()
-  return `${weekdayCap}, ${day}/${month}/${year}`
-}
+const StatementRow = memo(function StatementRow({
+  transaction,
+  onEdit,
+  onDelete,
+}: StatementRowProps) {
+  const menuItems = useMemo(
+    () => [
+      { id: 'edit', label: 'Editar', onClick: () => onEdit(transaction) },
+      {
+        id: 'delete',
+        label: 'Excluir',
+        onClick: () => onDelete(transaction.id),
+      },
+    ],
+    [onEdit, onDelete, transaction]
+  )
 
-function buildMonthlyFlowData(transactions: Transaction[]) {
-  const months = new Map<string, { Receitas: number; Despesas: number }>()
-  for (const transaction of transactions) {
-    const month = transaction.date.slice(0, 7)
-    const entry = months.get(month) ?? { Receitas: 0, Despesas: 0 }
-    if (transaction.amount >= 0) entry.Receitas += transaction.amount
-    else entry.Despesas += Math.abs(transaction.amount)
-    months.set(month, entry)
-  }
-
-  return [...months.entries()].sort().map(([month, values]) => ({
-    name: new Date(`${month}-01T12:00:00`).toLocaleDateString('pt-BR', {
-      month: 'short',
-      year: '2-digit',
-    }),
-    ...values,
-  }))
-}
-
-function buildTypeDistributionData(transactions: Transaction[]) {
-  const types = new Map<TransactionType, number>()
-  for (const transaction of transactions) {
-    types.set(
-      transaction.type,
-      (types.get(transaction.type) ?? 0) + Math.abs(transaction.amount)
-    )
-  }
-  return [...types.entries()].map(([name, value]) => ({
-    name,
-    value,
-    fill: transactionTypeColors[name],
-  }))
-}
+  return (
+    <TransactionItem
+      type={transaction.type}
+      amount={transaction.amount}
+      date={formatDisplayDate(transaction.date)}
+      name={transaction.name}
+      menuPlacement="home-stacked-date"
+      menuItems={menuItems}
+    />
+  )
+})
 
 export default function Home() {
   const pathname = usePathname()
   const { user } = useAuth()
-  const [balanceVisible, setBalanceVisible] = useState(true)
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>(
-    'loading'
-  )
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [formType, setFormType] = useState<TransactionType | ''>('')
-  const [formDescription, setFormDescription] = useState('')
-  const [formCategory, setFormCategory] =
-    useState<TransactionCategory>('Outros')
-  const [categoryTouched, setCategoryTouched] = useState(false)
-  const [formFiles, setFormFiles] = useState<File[]>([])
-  const [formAmount, setFormAmount] = useState('')
-  const [submitLoading, setSubmitLoading] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
+  const { status, error } = useTransactionCollection('all')
+  const { balance, monthlyFlow, typeDistribution, statementPreview } =
+    useDashboardAnalytics()
+  const mutations = useTransactionMutations()
+  const balanceVisibility = useBalanceVisibility()
+  const form = useNewTransactionForm()
+
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false)
 
-  function openEditModal(t: Transaction) {
-    setEditingTransaction(t)
-    setIsEditModalOpen(true)
-  }
-
-  async function handleEditModalSubmit(payload: {
-    id?: string
-    type: TransactionType
-    name: string
-    amount: number
-    category: TransactionCategory
-    files: File[]
-  }) {
-    if (!editingTransaction) return
-    const updated = await transactionUseCases.updateTransaction.execute(
-      editingTransaction.id,
-      {
-        id: editingTransaction.id,
-        type: payload.type,
-        name: payload.name,
-        amount: payload.amount,
-        date: editingTransaction.date,
-        category: payload.category,
-      }
-    )
-    const attachments =
-      payload.files.length > 0
-        ? await transactionUseCases.addTransactionAttachments.execute(
-            editingTransaction.id,
-            await filesToAttachmentUploads(payload.files)
-          )
-        : []
-    setTransactions((prev) =>
-      prev.map((t) =>
-        t.id === updated.id
-          ? {
-              ...updated,
-              attachments: [...(updated.attachments ?? []), ...attachments],
-            }
-          : t
-      )
-    )
-    setIsEditModalOpen(false)
-    setEditingTransaction(null)
-  }
-
-  useEffect(() => {
-    let cancelled = false
-    setLoadState('loading')
-    transactionUseCases.listTransactions
-      .execute()
-      .then((data) => {
-        if (!cancelled) {
-          setTransactions(data)
-          setLoadState('idle')
-          setLoadError(null)
-        }
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) {
-          setTransactions([])
-          setLoadState('error')
-          setLoadError(e instanceof Error ? e.message : 'Erro ao carregar.')
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!categoryTouched)
-      setFormCategory(suggestTransactionCategory(formDescription))
-  }, [formDescription, categoryTouched])
-
-  const balance = useMemo(() => totalBalance(transactions), [transactions])
-  const monthlyFlowData = useMemo(
-    () => buildMonthlyFlowData(transactions),
-    [transactions]
-  )
   const typeDistributionData = useMemo(
-    () => buildTypeDistributionData(transactions),
-    [transactions]
+    () =>
+      typeDistribution.map((slice) => ({
+        ...slice,
+        fill: transactionTypeColors[slice.name],
+      })),
+    [typeDistribution]
   )
 
-  const monthGroups = useMemo(() => {
-    const groups = groupTransactionsByMonth(transactions)
-    let remaining = 5
-    const preview = []
-
-    for (const group of groups) {
-      if (remaining <= 0) break
-      const items = group.items.slice(0, remaining)
-      remaining -= items.length
-      preview.push({ ...group, items })
-    }
-
-    return preview
-  }, [transactions])
-
-  const balanceLabel = balanceVisible
+  const balanceLabel = balanceVisibility.isVisible
     ? balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     : 'R$ ••••••'
 
-  async function handleNewTransaction(e: React.SubmitEvent) {
-    e.preventDefault()
-    setSubmitError(null)
-    if (!formType) {
-      setSubmitError('Selecione o tipo de transação.')
-      return
-    }
-    const name = formDescription.trim()
-    if (!name) {
-      setSubmitError('Informe uma descrição.')
-      return
-    }
-    const parsed = parseBRLAmount(formAmount)
-    if (parsed === null || parsed === 0) {
-      setSubmitError('Informe um valor válido.')
-      return
-    }
-    const payload: Omit<Transaction, 'id'> = {
-      type: formType,
-      name,
-      amount: amountForType(formType, parsed),
-      date: todayISO(),
-      category: formCategory,
-    }
-    setSubmitLoading(true)
-    try {
-      const created =
-        await transactionUseCases.createTransaction.execute(payload)
-      const attachments =
-        formFiles.length > 0
-          ? await transactionUseCases.addTransactionAttachments.execute(
-              created.id,
-              await filesToAttachmentUploads(formFiles)
-            )
-          : []
-      setTransactions((prev) => [{ ...created, attachments }, ...prev])
-      setFormType('')
-      setFormDescription('')
-      setFormAmount('')
-      setFormCategory('Outros')
-      setCategoryTouched(false)
-      setFormFiles([])
-    } catch (err: unknown) {
-      setSubmitError(
-        err instanceof Error ? err.message : 'Não foi possível concluir.'
-      )
-    } finally {
-      setSubmitLoading(false)
-    }
-  }
+  const { buildDraft, handleReset } = form
 
-  async function handleDelete(id: string) {
-    if (!window.confirm('Excluir esta transação?')) return
-    try {
-      await transactionUseCases.deleteTransaction.execute(id)
-      setTransactions((prev) => prev.filter((t) => t.id !== id))
-    } catch {
-      window.alert('Não foi possível excluir.')
-    }
-  }
+  const handleNewTransaction = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault()
+      setSubmitError(null)
+
+      const draft = buildDraft()
+      if (!draft.ok) {
+        setSubmitError(draft.message)
+        return
+      }
+
+      try {
+        await mutations.create(draft.data, draft.files)
+        handleReset()
+      } catch (reason) {
+        setSubmitError(toError(reason, 'Não foi possível concluir.').message)
+      }
+    },
+    [buildDraft, handleReset, mutations]
+  )
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (!window.confirm('Excluir esta transação?')) return
+
+      void mutations.remove([id])
+    },
+    [mutations]
+  )
+
+  const handleCloseEditModal = useCallback(() => {
+    setEditingTransaction(null)
+  }, [])
+
+  const handleEditSubmit = useCallback(
+    async (payload: {
+      id?: string
+      type: TransactionType
+      name: string
+      amount: number
+      category: TransactionCategory
+      files: File[]
+    }) => {
+      if (!editingTransaction) return
+
+      await mutations.update(
+        editingTransaction.id,
+        {
+          id: editingTransaction.id,
+          type: payload.type,
+          name: payload.name,
+          amount: payload.amount,
+          date: editingTransaction.date,
+          category: payload.category,
+        },
+        payload.files
+      )
+
+      setEditingTransaction(null)
+    },
+    [editingTransaction, mutations]
+  )
+
+  const handleRemoveAttachment = useCallback(
+    async (attachmentId: string) => {
+      if (!editingTransaction) return
+
+      await mutations.removeAttachment(editingTransaction.id, attachmentId)
+    },
+    [editingTransaction, mutations]
+  )
+
+  const handleOpenAnalytics = useCallback(() => {
+    setIsAnalyticsModalOpen(true)
+  }, [])
+
+  const handleCloseAnalytics = useCallback(() => {
+    setIsAnalyticsModalOpen(false)
+  }, [])
 
   return (
     <main className={styles.dashboard}>
@@ -330,10 +242,12 @@ export default function Home() {
               <button
                 type="button"
                 className={`${styles.iconButton} ${styles.saldoIcon}`}
-                onClick={() => setBalanceVisible((v) => !v)}
-                aria-label={balanceVisible ? 'Ocultar saldo' : 'Mostrar saldo'}
+                onClick={balanceVisibility.handleToggle}
+                aria-label={
+                  balanceVisibility.isVisible ? 'Ocultar saldo' : 'Mostrar saldo'
+                }
               >
-                {balanceVisible ? (
+                {balanceVisibility.isVisible ? (
                   <MdVisibility size={22} />
                 ) : (
                   <MdVisibilityOff size={22} />
@@ -358,7 +272,7 @@ export default function Home() {
             type="button"
             variant="outline"
             size="medium"
-            onClick={() => setIsAnalyticsModalOpen(true)}
+            onClick={handleOpenAnalytics}
           >
             <MdOpenInFull aria-hidden="true" size={18} /> Ampliar gráficos
           </Button>
@@ -369,28 +283,17 @@ export default function Home() {
             <Chart
               title="Receitas x Despesas"
               type="line"
-              series={[
-                {
-                  name: 'Receitas',
-                  key: 'Receitas',
-                  color: chartTheme.series.receitas,
-                },
-                {
-                  name: 'Despesas',
-                  key: 'Despesas',
-                  color: chartTheme.series.despesas,
-                },
-              ]}
-              axis={{ x: { key: 'name', show: true }, y: { show: true } }}
-              data={monthlyFlowData}
+              series={MONTHLY_FLOW_SERIES}
+              axis={MONTHLY_FLOW_AXIS}
+              data={monthlyFlow}
             />
           </Paper>
           <Paper classname={styles.chartCard}>
             <Chart
               title="Distribuição por tipo"
               type="pie"
-              series={[{ name: 'Movimentações', key: 'value' }]}
-              axis={{ x: { show: false }, y: { show: false } }}
+              series={TYPE_DISTRIBUTION_SERIES}
+              axis={TYPE_DISTRIBUTION_AXIS}
               data={typeDistributionData}
             />
           </Paper>
@@ -398,7 +301,7 @@ export default function Home() {
 
         <Modal
           isOpen={isAnalyticsModalOpen}
-          onClose={() => setIsAnalyticsModalOpen(false)}
+          onClose={handleCloseAnalytics}
           classname={styles.analyticsModal}
         >
           <section aria-label="Análises financeiras ampliadas">
@@ -415,28 +318,17 @@ export default function Home() {
                 <Chart
                   title="Receitas x Despesas"
                   type="line"
-                  series={[
-                    {
-                      name: 'Receitas',
-                      key: 'Receitas',
-                      color: chartTheme.series.receitas,
-                    },
-                    {
-                      name: 'Despesas',
-                      key: 'Despesas',
-                      color: chartTheme.series.despesas,
-                    },
-                  ]}
-                  axis={{ x: { key: 'name', show: true }, y: { show: true } }}
-                  data={monthlyFlowData}
+                  series={MONTHLY_FLOW_SERIES}
+                  axis={MONTHLY_FLOW_AXIS}
+                  data={monthlyFlow}
                 />
               </Paper>
               <Paper classname={styles.chartCard}>
                 <Chart
                   title="Distribuição por tipo"
                   type="pie"
-                  series={[{ name: 'Movimentações', key: 'value' }]}
-                  axis={{ x: { show: false }, y: { show: false } }}
+                  series={TYPE_DISTRIBUTION_SERIES}
+                  axis={TYPE_DISTRIBUTION_AXIS}
                   data={typeDistributionData}
                 />
               </Paper>
@@ -455,31 +347,34 @@ export default function Home() {
               Nova transação
             </Typography>
             <div className={styles.fieldGroup}>
-              <label className={styles.labelMuted}>Tipo de transação:</label>
+              <label className={styles.labelMuted} htmlFor="tipoTransacao">
+                Tipo de transação:
+              </label>
               <Select
                 id="tipoTransacao"
                 className={`${styles.selectFull} ${styles.formSelect}`}
                 placeholder="Selecione o tipo de transação"
-                options={transactionFormOptions}
-                value={formType}
-                onChange={(v) => setFormType(v as TransactionType)}
-                disabled={submitLoading}
+                options={TRANSACTION_FORM_OPTIONS}
+                value={form.values.type}
+                onChange={(value) =>
+                  form.handleTypeChange(value as TransactionType)
+                }
+                disabled={mutations.isMutating}
               />
             </div>
             <div className={styles.fieldGroup}>
-              <label className={styles.labelMuted}>Categoria:</label>
+              <label className={styles.labelMuted} htmlFor="categoriaTransacao">
+                Categoria:
+              </label>
               <Select
+                id="categoriaTransacao"
                 className={`${styles.selectFull} ${styles.formSelect}`}
-                options={transactionCategories.map((value) => ({
-                  value,
-                  label: value,
-                }))}
-                value={formCategory}
-                onChange={(value) => {
-                  setCategoryTouched(true)
-                  setFormCategory(value as TransactionCategory)
-                }}
-                disabled={submitLoading}
+                options={CATEGORY_OPTIONS}
+                value={form.values.category}
+                onChange={(value) =>
+                  form.handleCategoryChange(value as TransactionCategory)
+                }
+                disabled={mutations.isMutating}
               />
             </div>
             <div className={styles.fieldGroup}>
@@ -492,9 +387,9 @@ export default function Home() {
                 accept="application/pdf,image/jpeg,image/png"
                 multiple
                 onChange={(event) =>
-                  setFormFiles(Array.from(event.target.files ?? []))
+                  form.handleFilesChange(Array.from(event.target.files ?? []))
                 }
-                disabled={submitLoading}
+                disabled={mutations.isMutating}
               />
             </div>
             <div className={styles.fieldGroup}>
@@ -507,9 +402,11 @@ export default function Home() {
                 type="text"
                 placeholder="Ex.: Aluguel, presente, salário…"
                 className={styles.formDescriptionInput}
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                disabled={submitLoading}
+                value={form.values.description}
+                onChange={(event) =>
+                  form.handleDescriptionChange(event.target.value)
+                }
+                disabled={mutations.isMutating}
                 autoComplete="off"
               />
             </div>
@@ -524,11 +421,11 @@ export default function Home() {
                 inputMode="decimal"
                 placeholder="R$ 0,00"
                 className={styles.formValueInput}
-                value={formAmount ? `R$ ${formAmount}` : ''}
-                onChange={(e) =>
-                  setFormAmount(formatBRLFromDigits(e.target.value))
+                value={form.values.amount ? `R$ ${form.values.amount}` : ''}
+                onChange={(event) =>
+                  form.handleAmountChange(event.target.value)
                 }
-                disabled={submitLoading}
+                disabled={mutations.isMutating}
               />
             </div>
             {submitError ? (
@@ -536,6 +433,7 @@ export default function Home() {
                 variant="body-sm"
                 color="error"
                 classname={styles.formError}
+                role="alert"
               >
                 {submitError}
               </Typography>
@@ -545,17 +443,17 @@ export default function Home() {
               variant="default"
               size="large"
               className={styles.formSubmit}
-              disabled={submitLoading}
+              disabled={mutations.isMutating}
             >
-              {submitLoading ? 'Enviando…' : 'Concluir transação'}
+              {mutations.isMutating ? 'Enviando…' : 'Concluir transação'}
             </Button>
           </form>
         </Paper>
 
-        {isEditModalOpen && editingTransaction && (
+        {editingTransaction && (
           <EditTransactionModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
+            isOpen
+            onClose={handleCloseEditModal}
             initial={{
               id: editingTransaction.id,
               type: editingTransaction.type,
@@ -564,26 +462,8 @@ export default function Home() {
               category: editingTransaction.category,
               attachments: editingTransaction.attachments,
             }}
-            onSubmit={handleEditModalSubmit}
-            onRemoveAttachment={async (attachmentId) => {
-              if (!editingTransaction) return
-              await transactionUseCases.removeTransactionAttachment.execute(
-                editingTransaction.id,
-                attachmentId
-              )
-              setTransactions((current) =>
-                current.map((transaction) =>
-                  transaction.id === editingTransaction.id
-                    ? {
-                        ...transaction,
-                        attachments: (transaction.attachments ?? []).filter(
-                          (attachment) => attachment.id !== attachmentId
-                        ),
-                      }
-                    : transaction
-                )
-              )
-            }}
+            onSubmit={handleEditSubmit}
+            onRemoveAttachment={handleRemoveAttachment}
           />
         )}
       </div>
@@ -595,22 +475,27 @@ export default function Home() {
               Extrato
             </Typography>
           </div>
-          {loadState === 'loading' ? (
+          {status === 'loading' ? (
             <Typography variant="body-sm" color="active">
               Carregando extrato…
             </Typography>
           ) : null}
-          {loadState === 'error' ? (
+          {status === 'error' ? (
             <Typography variant="body-sm" color="error">
-              {loadError}
+              {error}
             </Typography>
           ) : null}
-          {loadState === 'idle' && monthGroups.length === 0 ? (
+          {mutations.error ? (
+            <Typography variant="body-sm" color="error" role="alert">
+              {mutations.error}
+            </Typography>
+          ) : null}
+          {status === 'success' && statementPreview.length === 0 ? (
             <Typography variant="body-sm" color="active">
               Nenhuma transação encontrada.
             </Typography>
           ) : null}
-          {monthGroups.map((group) => (
+          {statementPreview.map((group) => (
             <div key={group.key} className={styles.monthBlock}>
               <Typography
                 variant="title-sm"
@@ -621,26 +506,12 @@ export default function Home() {
                 {group.label}
               </Typography>
               <div className={styles.list}>
-                {group.items.map((t) => (
-                  <TransactionItem
-                    key={t.id}
-                    type={t.type}
-                    amount={t.amount}
-                    date={formatDisplayDate(t.date)}
-                    name={t.name}
-                    menuPlacement="home-stacked-date"
-                    menuItems={[
-                      {
-                        id: 'edit',
-                        label: 'Editar',
-                        onClick: () => openEditModal(t),
-                      },
-                      {
-                        id: 'delete',
-                        label: 'Excluir',
-                        onClick: () => handleDelete(t.id),
-                      },
-                    ]}
+                {group.items.map((transaction) => (
+                  <StatementRow
+                    key={transaction.id}
+                    transaction={transaction}
+                    onEdit={setEditingTransaction}
+                    onDelete={handleDelete}
                   />
                 ))}
               </div>

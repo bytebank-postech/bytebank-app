@@ -1,4 +1,4 @@
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import { ElementType } from 'react'
 import style from './Typography.module.scss'
 import { TypographyProps, Variant } from './Typography.types'
@@ -19,6 +19,7 @@ export default function Typography({
   variant = 'body',
   weight = 'normal',
   color,
+  role,
 }: TypographyProps) {
   const Component = componentMap[variant]
   const classnames = getClassnames(
@@ -28,5 +29,9 @@ export default function Typography({
     style[weight]
   )
 
-  return <Component className={classnames}>{children}</Component>
+  return (
+    <Component className={classnames} role={role}>
+      {children}
+    </Component>
+  )
 }

@@ -1,4 +1,4 @@
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import styles from './Button.module.scss'
 import { ButtonProps } from './Button.types'
 import Typography from '../Typography/Typography'

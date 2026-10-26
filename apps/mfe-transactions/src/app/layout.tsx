@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.scss'
-import { Header as AppHeader } from '@bytebank/ui'
-import { AuthGuard, AuthProvider, StoreProvider } from '@bytebank/shared'
+import { AppProviders, AuthGuard } from '@bytebank/shared'
+import AppHeader from '../components/AppHeader'
 
 export const metadata: Metadata = {
   title: 'ByteBank',
@@ -16,14 +16,12 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <AuthProvider>
-          <StoreProvider>
-            <AuthGuard>
-              <AppHeader></AppHeader>
-              {children}
-            </AuthGuard>
-          </StoreProvider>
-        </AuthProvider>
+        <AppProviders>
+          <AuthGuard>
+            <AppHeader />
+            {children}
+          </AuthGuard>
+        </AppProviders>
       </body>
     </html>
   )

@@ -17,7 +17,7 @@ Clean Architecture — detalhes em [ARCHITECTURE.md](./ARCHITECTURE.md).
 | `mfe-transactions`         |        3002 | Busca, filtros, paginação, edição e anexos      |
 | `mfe-auth`                 |        3003 | Login, logout e sessão                          |
 | `@bytebank/ui`             |        6006 | Design system e Storybook                       |
-| `@bytebank/shared`         |           — | Auth React, Redux e utilitários de apresentação |
+| `@bytebank/shared`         |           — | Store Redux, hooks facade e utilitários de UI   |
 | `@bytebank/domain`         |           — | Entidades e regras de negócio                   |
 | `@bytebank/application`    |           — | Ports e use cases                               |
 | `@bytebank/infrastructure` |           — | Adapters HTTP, in-memory e JWT                  |
@@ -79,7 +79,8 @@ ao testar localmente em HTTP.
 - Sugestão automática de categoria pela descrição, com alteração manual.
 - Upload de PDF, PNG e JPEG de até 5 MB; abertura e remoção de anexos.
 - Busca, filtros por tipo/mês e paginação server-side.
-- Redux Toolkit centraliza filtros, paginação, carregamento e dados da listagem.
+- Redux Toolkit centraliza transações, sessão e preferências, com coleção normalizada e seletores memoizados.
+- Busca com debounce, cancelamento de requisições superadas e exclusão otimista com rollback, via listener middleware.
 - JWT em cookie HTTP-only; middleware protege rotas privadas.
 
 ## Storybook e roteiro de apresentação
@@ -121,7 +122,7 @@ packages/
   application/          # ports e use cases
   infrastructure/       # adapters (HTTP, in-memory, JWT)
   ui/                   # design system e Storybook
-  shared/               # Auth, Redux e utilitários de apresentação
+  shared/               # store Redux, hooks facade e utilitários de UI
 ```
 
 ```bash

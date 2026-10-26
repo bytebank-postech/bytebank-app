@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
   Paper,
@@ -18,113 +18,111 @@ import type {
   TransactionCategory,
   TransactionType,
 } from '@bytebank/domain'
+import { formatDisplayDate } from '@bytebank/domain'
 import {
-  amountForType,
-  formatDisplayDate,
-  groupTransactionsByMonth,
-  parseBRLAmount,
-} from '@bytebank/domain'
-import {
-  createClientTransactionUseCases,
-  filesToAttachmentUploads,
-} from '@bytebank/infrastructure/client'
-import {
-  clearFilters,
-  loadTransactions,
-  removeTransactions,
-  replaceTransaction,
-  setMonth,
-  setPage,
-  setSearch,
-  setType,
-  useAppDispatch,
-  useAppSelector,
+  useSelection,
+  useTransactionCollection,
+  useTransactionFilters,
+  useTransactionMutations,
 } from '@bytebank/shared'
 import { MdDelete, MdFilterAltOff, MdManageSearch } from 'react-icons/md'
 import styles from './page.module.scss'
 
-const transactionUseCases = createClientTransactionUseCases()
+const TRANSACTION_TYPE_OPTIONS = [
+  'Todos',
+  'Transferência',
+  'Pagamento',
+  'Depósito',
+  'Pix',
+].map((type) => ({ label: type, value: type }))
 
-export const mapToSelectOptions = () => {
-  const TRANSACTION_TYPES = [
-    'Todos',
-    'Transferência',
-    'Pagamento',
-    'Depósito',
-    'Pix',
-  ]
-
-  return TRANSACTION_TYPES.map((type) => ({ label: type, value: type }))
+type TransactionRowProps = {
+  transaction: Transaction
+  selectable: boolean
+  selected: boolean
+  onToggleSelected: (id: string, selected: boolean) => void
+  onEdit: (transaction: Transaction) => void
+  onDelete: (id: string) => void
 }
 
-function digitsOnly(raw: string): string {
-  return raw.replace(/\D/g, '')
-}
+const TransactionRow = memo(function TransactionRow({
+  transaction,
+  selectable,
+  selected,
+  onToggleSelected,
+  onEdit,
+  onDelete,
+}: TransactionRowProps) {
+  const handleSelectedChange = useCallback(
+    (next: boolean) => onToggleSelected(transaction.id, next),
+    [onToggleSelected, transaction.id]
+  )
 
-function formatBRLFromDigits(raw: string): string {
-  const digits = digitsOnly(raw)
-  if (!digits) return ''
-  const cents = Number(digits)
-  const value = cents / 100
-  return value.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
+  const menuItems = useMemo(() => {
+    if (selectable) return undefined
+
+    return [
+      {
+        id: 'edit',
+        label: 'Editar',
+        onClick: () => onEdit(transaction),
+      },
+      {
+        id: 'delete',
+        label: 'Excluir',
+        onClick: () => onDelete(transaction.id),
+      },
+    ]
+  }, [selectable, onEdit, onDelete, transaction])
+
+  return (
+    <TransactionItem
+      type={transaction.type}
+      amount={transaction.amount}
+      date={formatDisplayDate(transaction.date)}
+      name={transaction.name}
+      menuPlacement="home-stacked-date"
+      selectable={selectable}
+      selected={selected}
+      onSelectedChange={handleSelectedChange}
+      menuItems={menuItems}
+    />
+  )
+})
 
 export default function TransactionsPage() {
-  const dispatch = useAppDispatch()
-  const {
-    items: transactions,
-    total: totalItems,
-    totalPages,
-    status: loadState,
-    error: loadError,
-    filters,
-  } = useAppSelector((state) => state.transactions)
-  const {
-    search: searchTerm,
-    type: selectedType,
-    month: selectedMonth,
-    page,
-  } = filters
-  const [isSearchActive, setIsSearchActive] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const { transactions, monthGroups, status, error, totalItems, totalPages } =
+    useTransactionCollection('page')
+  const filters = useTransactionFilters()
+  const mutations = useTransactionMutations()
 
-  const [bulkDeleteMode, setBulkDeleteMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
+  const visibleIds = useMemo(
+    () => transactions.map((transaction) => transaction.id),
+    [transactions]
+  )
+  const selection = useSelection(visibleIds)
+
+  const [isSearchActive, setIsSearchActive] = useState(false)
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null)
-  const [editLoading, setEditLoading] = useState(false)
-  const [editError, setEditError] = useState<string | null>(null)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
-  const [editFormType, setEditFormType] = useState<TransactionType | ''>('')
-  const [editFormDescription, setEditFormDescription] = useState('')
-  const [editFormAmount, setEditFormAmount] = useState('')
+  const { handleSearchChange, handleClearFilters } = filters
 
   useEffect(() => {
-    if (isSearchActive && searchInputRef.current) {
-      searchInputRef.current.focus()
-    }
+    if (isSearchActive) searchInputRef.current?.focus()
   }, [isSearchActive])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        dispatch(setSearch(''))
+        if (!isSearchActive || editingTransaction) return
+
+        handleSearchChange('')
         setIsSearchActive(false)
+        return
       }
-    }
-    document.addEventListener('keydown', handleKeyDown)
 
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [dispatch])
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
       const isSearchShortcut =
         (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') ||
         (event.metaKey && event.key === '/')
@@ -140,168 +138,72 @@ export default function TransactionsPage() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
+  }, [editingTransaction, handleSearchChange, isSearchActive])
+
+  const handleToggleSearch = useCallback(() => {
+    setIsSearchActive((current) => {
+      if (current) handleSearchChange('')
+
+      return !current
+    })
+  }, [handleSearchChange])
+
+  const handleResetFilters = useCallback(() => {
+    handleClearFilters()
+    setIsSearchActive(false)
+  }, [handleClearFilters])
+
+  const handleCloseEditModal = useCallback(() => {
+    setEditingTransaction(null)
   }, [])
 
-  useEffect(() => {
-    void dispatch(loadTransactions(filters))
-  }, [dispatch, filters])
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (!window.confirm('Excluir esta transação?')) return
 
-  const monthGroups = useMemo(
-    () => groupTransactionsByMonth(transactions),
-    [transactions]
+      void mutations.remove([id])
+    },
+    [mutations]
   )
 
-  const allSelected =
-    bulkDeleteMode && transactions.length > 0
-      ? transactions.every((transaction) => selectedIds[transaction.id])
-      : false
-
-  function setAllSelected(next: boolean) {
-    if (!bulkDeleteMode) return
-    if (!next) {
-      setSelectedIds({})
+  const handleTrashClick = useCallback(() => {
+    if (!selection.isActive) {
+      selection.handleEnable()
       return
     }
-    const map: Record<string, boolean> = {}
-    for (const item of transactions) map[item.id] = true
-    setSelectedIds(map)
-  }
 
-  function toggleSearch() {
-    if (isSearchActive) {
-      dispatch(setSearch(''))
+    if (selection.selectedCount === 0) {
+      selection.handleDisable()
+      return
     }
-    setIsSearchActive((current) => !current)
-  }
 
-  function handleClearFilters() {
-    dispatch(clearFilters())
-    setIsSearchActive(false)
-  }
+    const confirmed = window.confirm(
+      `Excluir ${selection.selectedCount} transação(ões) selecionada(s)?`
+    )
+    if (!confirmed) return
 
-  useEffect(() => {
-    setSelectedIds({})
-  }, [searchTerm, selectedType, selectedMonth])
+    void mutations.remove(selection.selectedIds).finally(selection.handleDisable)
+  }, [mutations, selection])
 
-  const selectedCount = useMemo(
-    () => Object.values(selectedIds).filter(Boolean).length,
-    [selectedIds]
+  const handleToggleAll = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      selection.handleToggleAll(event.target.checked)
+    },
+    [selection]
   )
 
-  async function handleBulkDeleteSelected() {
-    const ids = Object.entries(selectedIds)
-      .filter(([, v]) => v)
-      .map(([id]) => id)
-    if (ids.length === 0) return
-    if (!window.confirm(`Excluir ${ids.length} transação(ões) selecionada(s)?`))
-      return
-    try {
-      await Promise.all(
-        ids.map((id) => transactionUseCases.deleteTransaction.execute(id))
-      )
-      dispatch(removeTransactions(ids))
-      setSelectedIds({})
-      setBulkDeleteMode(false)
-    } catch {
-      window.alert('Não foi possível excluir.')
-    }
-  }
+  const handleEditSubmit = useCallback(
+    async (payload: {
+      id?: string
+      type: TransactionType
+      name: string
+      amount: number
+      category: TransactionCategory
+      files: File[]
+    }) => {
+      if (!editingTransaction) return
 
-  function onTrashButtonClick() {
-    if (!bulkDeleteMode) {
-      setBulkDeleteMode(true)
-      setSelectedIds({})
-      return
-    }
-    if (selectedCount === 0) {
-      setBulkDeleteMode(false)
-      setSelectedIds({})
-      return
-    }
-    void handleBulkDeleteSelected()
-  }
-
-  async function handleDelete(id: string) {
-    if (!window.confirm('Excluir esta transação?')) return
-    try {
-      await transactionUseCases.deleteTransaction.execute(id)
-      dispatch(removeTransactions([id]))
-    } catch {
-      window.alert('Não foi possível excluir.')
-    }
-  }
-
-  function openEditModal(t: Transaction) {
-    setEditingTransaction(t)
-    setEditFormType(t.type)
-    setEditFormDescription(t.name)
-    const formatted = Math.abs(t.amount).toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-    setEditFormAmount(formatted)
-    setIsEditModalOpen(true)
-  }
-
-  async function handleEditTransaction(e: React.FormEvent) {
-    e.preventDefault()
-    setEditError(null)
-    if (!editingTransaction) return
-    if (!editFormType) {
-      setEditError('Selecione o tipo de transação.')
-      return
-    }
-    const name = editFormDescription.trim()
-    if (!name) {
-      setEditError('Informe uma descrição.')
-      return
-    }
-    const parsed = parseBRLAmount(editFormAmount)
-    if (parsed === null || parsed === 0) {
-      setEditError('Informe um valor válido.')
-      return
-    }
-    const payload: Transaction = {
-      id: editingTransaction.id,
-      type: editFormType,
-      name,
-      amount: amountForType(editFormType, parsed),
-      date: editingTransaction.date,
-    }
-    setEditLoading(true)
-    try {
-      const updated = await transactionUseCases.updateTransaction.execute(
-        editingTransaction.id,
-        payload
-      )
-      dispatch(replaceTransaction(updated))
-      setIsEditModalOpen(false)
-      setEditingTransaction(null)
-      setEditFormType('')
-      setEditFormDescription('')
-      setEditFormAmount('')
-    } catch (err: unknown) {
-      setEditError(
-        err instanceof Error ? err.message : 'Não foi possível concluir.'
-      )
-    } finally {
-      setEditLoading(false)
-    }
-  }
-
-  async function handleEditModalSubmit(payload: {
-    id?: string
-    type: TransactionType
-    name: string
-    amount: number
-    category: TransactionCategory
-    files: File[]
-  }) {
-    if (!editingTransaction) return
-    setEditLoading(true)
-    setEditError(null)
-    try {
-      const updated = await transactionUseCases.updateTransaction.execute(
+      await mutations.update(
         editingTransaction.id,
         {
           id: editingTransaction.id,
@@ -310,34 +212,29 @@ export default function TransactionsPage() {
           amount: payload.amount,
           date: editingTransaction.date,
           category: payload.category,
-        }
+        },
+        payload.files
       )
-      const attachments =
-        payload.files.length > 0
-          ? await transactionUseCases.addTransactionAttachments.execute(
-              editingTransaction.id,
-              await filesToAttachmentUploads(payload.files)
-            )
-          : []
-      dispatch(
-        replaceTransaction({
-          ...updated,
-          attachments: [...(updated.attachments ?? []), ...attachments],
-        })
-      )
-      setIsEditModalOpen(false)
+
       setEditingTransaction(null)
-      setEditFormType('')
-      setEditFormDescription('')
-      setEditFormAmount('')
-    } catch (err: unknown) {
-      setEditError(
-        err instanceof Error ? err.message : 'Não foi possível concluir.'
-      )
-    } finally {
-      setEditLoading(false)
-    }
-  }
+    },
+    [editingTransaction, mutations]
+  )
+
+  const handleRemoveAttachment = useCallback(
+    async (attachmentId: string) => {
+      if (!editingTransaction) return
+
+      await mutations.removeAttachment(editingTransaction.id, attachmentId)
+    },
+    [editingTransaction, mutations]
+  )
+
+  const trashLabel = selection.isActive
+    ? selection.selectedCount > 0
+      ? 'Confirmar exclusão das selecionadas'
+      : 'Cancelar exclusão em massa'
+    : 'Exclusão em massa'
 
   return (
     <main className={styles.page}>
@@ -354,12 +251,12 @@ export default function TransactionsPage() {
             <div className={styles.actions}>
               <div className={styles.filterControls}>
                 <Select
-                  options={mapToSelectOptions()}
+                  options={TRANSACTION_TYPE_OPTIONS}
                   placeholder="Filtrar por Tipo"
-                  value={selectedType}
-                  onChange={(value) => {
-                    dispatch(setType(value as TransactionType | 'Todos'))
-                  }}
+                  value={filters.type}
+                  onChange={(value) =>
+                    filters.handleTypeChange(value as TransactionType | 'Todos')
+                  }
                 />
               </div>
               <div className={styles.filterControls}>
@@ -368,10 +265,10 @@ export default function TransactionsPage() {
                   aria-label="Filtrar por mês"
                   className={styles.monthInput}
                   type="month"
-                  value={selectedMonth === 'Todos' ? '' : selectedMonth}
-                  onChange={(event) => {
-                    dispatch(setMonth(event.target.value || 'Todos'))
-                  }}
+                  value={filters.month === 'Todos' ? '' : filters.month}
+                  onChange={(event) =>
+                    filters.handleMonthChange(event.target.value || 'Todos')
+                  }
                 />
               </div>
 
@@ -380,47 +277,39 @@ export default function TransactionsPage() {
                   <Input
                     ref={searchInputRef}
                     placeholder="Buscar por nome ou tipo..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      dispatch(setSearch(e.target.value))
-                    }}
+                    value={filters.search}
+                    onChange={(event) =>
+                      filters.handleSearchChange(event.target.value)
+                    }
                   />
                 </div>
               )}
               <Button
                 variant="rounded"
                 icon={<MdManageSearch size={20} />}
-                onClick={toggleSearch}
+                onClick={handleToggleSearch}
                 aria-label={
                   isSearchActive ? 'Limpar filtro' : 'Buscar transações'
                 }
               />
-              {(searchTerm ||
-                selectedType !== 'Todos' ||
-                selectedMonth !== 'Todos') && (
+              {filters.hasActiveFilters && (
                 <Button
                   variant="rounded"
                   icon={<MdFilterAltOff size={20} />}
-                  onClick={handleClearFilters}
+                  onClick={handleResetFilters}
                   aria-label="Limpar todos os filtros"
                 />
               )}
               <Button
                 variant="rounded"
                 icon={<MdDelete size={20} />}
-                onClick={onTrashButtonClick}
-                aria-label={
-                  bulkDeleteMode
-                    ? selectedCount > 0
-                      ? 'Confirmar exclusão das selecionadas'
-                      : 'Cancelar exclusão em massa'
-                    : 'Exclusão em massa'
-                }
+                onClick={handleTrashClick}
+                aria-label={trashLabel}
               />
             </div>
           </div>
 
-          {bulkDeleteMode ? (
+          {selection.isActive ? (
             <div className={styles.bulkRow}>
               <label
                 className={styles.bulkCheckboxWrapper}
@@ -429,8 +318,8 @@ export default function TransactionsPage() {
                 <input
                   className={styles.bulkCheckboxInput}
                   type="checkbox"
-                  checked={allSelected}
-                  onChange={(e) => setAllSelected(e.target.checked)}
+                  checked={selection.allSelected}
+                  onChange={handleToggleAll}
                 />
                 <span className={styles.bulkCheckboxBox} aria-hidden="true" />
               </label>
@@ -438,17 +327,22 @@ export default function TransactionsPage() {
             </div>
           ) : null}
 
-          {loadState === 'loading' ? (
+          {status === 'loading' ? (
             <Typography variant="body-sm" color="active">
               Carregando…
             </Typography>
           ) : null}
-          {loadState === 'error' ? (
+          {status === 'error' ? (
             <Typography variant="body-sm" color="error">
-              {loadError}
+              {error}
             </Typography>
           ) : null}
-          {loadState === 'idle' && monthGroups.length === 0 ? (
+          {mutations.error ? (
+            <Typography variant="body-sm" color="error" role="alert">
+              {mutations.error}
+            </Typography>
+          ) : null}
+          {status === 'success' && monthGroups.length === 0 ? (
             <Typography variant="body-sm" color="active">
               Nenhuma transação encontrada.
             </Typography>
@@ -460,52 +354,34 @@ export default function TransactionsPage() {
                 {group.label}
               </Typography>
               <div className={styles.list}>
-                {group.items.map((t) => (
-                  <TransactionItem
-                    key={t.id}
-                    type={t.type}
-                    amount={t.amount}
-                    date={formatDisplayDate(t.date)}
-                    name={t.name}
-                    menuPlacement="home-stacked-date"
-                    selectable={bulkDeleteMode}
-                    selected={!!selectedIds[t.id]}
-                    onSelectedChange={(next) =>
-                      setSelectedIds((prev) => ({ ...prev, [t.id]: next }))
-                    }
-                    menuItems={
-                      bulkDeleteMode
-                        ? undefined
-                        : [
-                            {
-                              id: 'edit',
-                              label: 'Editar',
-                              onClick: () => openEditModal(t),
-                            },
-                            {
-                              id: 'delete',
-                              label: 'Excluir',
-                              onClick: () => void handleDelete(t.id),
-                            },
-                          ]
-                    }
+                {group.items.map((transaction) => (
+                  <TransactionRow
+                    key={transaction.id}
+                    transaction={transaction}
+                    selectable={selection.isActive}
+                    selected={selection.isSelected(transaction.id)}
+                    onToggleSelected={selection.handleToggle}
+                    onEdit={setEditingTransaction}
+                    onDelete={handleDelete}
                   />
                 ))}
               </div>
             </div>
           ))}
-          {loadState === 'idle' && totalPages > 1 ? (
+
+          {status === 'success' && totalPages > 1 ? (
             <Pagination
-              currentPage={page}
+              currentPage={filters.page}
               totalItems={totalItems}
-              pageSize={10}
-              onPageChange={(nextPage) => dispatch(setPage(nextPage))}
+              pageSize={filters.pageSize}
+              onPageChange={filters.handlePageChange}
             />
           ) : null}
-          {isEditModalOpen && editingTransaction && (
+
+          {editingTransaction && (
             <EditTransactionModal
-              isOpen={isEditModalOpen}
-              onClose={() => setIsEditModalOpen(false)}
+              isOpen
+              onClose={handleCloseEditModal}
               initial={{
                 id: editingTransaction.id,
                 type: editingTransaction.type,
@@ -514,22 +390,8 @@ export default function TransactionsPage() {
                 category: editingTransaction.category,
                 attachments: editingTransaction.attachments,
               }}
-              onSubmit={handleEditModalSubmit}
-              onRemoveAttachment={async (attachmentId) => {
-                if (!editingTransaction) return
-                await transactionUseCases.removeTransactionAttachment.execute(
-                  editingTransaction.id,
-                  attachmentId
-                )
-                dispatch(
-                  replaceTransaction({
-                    ...editingTransaction,
-                    attachments: (editingTransaction.attachments ?? []).filter(
-                      (attachment) => attachment.id !== attachmentId
-                    ),
-                  })
-                )
-              }}
+              onSubmit={handleEditSubmit}
+              onRemoveAttachment={handleRemoveAttachment}
             />
           )}
         </Paper>

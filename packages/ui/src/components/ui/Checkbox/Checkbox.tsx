@@ -1,4 +1,4 @@
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import styles from './Checkbox.module.scss'
 import { CheckboxProps } from './Checkbox.types'
 

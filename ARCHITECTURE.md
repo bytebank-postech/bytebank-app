@@ -40,11 +40,11 @@ domain
 
 ### Domain (`@bytebank/domain`)
 
-Entidades (`Transaction`, `AuthUser`), regras puras (`totalBalance`, `amountForType`, `suggestTransactionCategory`, validação de anexos). Sem React, Next, `fetch` ou `jose`.
+Entidades (`Transaction`, `AuthUser`), regras puras (`totalBalance`, `amountForType`, `suggestTransactionCategory`, validação de anexos) e derivações analíticas (`buildMonthlyFlow`, `buildTypeDistribution`, `previewMonthGroups`). Sem React, Next, `fetch` ou `jose`.
 
 ### Application (`@bytebank/application`)
 
-- **Ports:** `TransactionRepository`, `AuthUserRepository`, `TokenService`
+- **Ports:** `TransactionRepository`, `AuthUserRepository`, `TokenService`, `SessionGateway`
 - **Use cases Auth:** `LoginUser`, `RegisterUser`, `GetSession`
 - **Use cases Transactions:** listar, paginar, obter, criar, atualizar, excluir, anexos
 
@@ -58,6 +58,7 @@ Factories: `createTransactionUseCases(repo)`, `createAuthUseCases(users, tokens)
 | `HttpTransactionRepository`     | cliente browser → `/api/transactions` |
 | `JwtTokenService`               | assinar/verificar JWT (`jose`)        |
 | `InMemoryUserRepository`        | usuários de demonstração              |
+| `HttpSessionGateway`            | cliente browser → `/auth/api/*`       |
 
 Entradas separadas para não misturar código de servidor no client:
 
@@ -66,7 +67,15 @@ Entradas separadas para não misturar código de servidor no client:
 
 ### Shared (`@bytebank/shared`)
 
-Camada de apresentação compartilhada: `AuthProvider` / `AuthGuard` / `useAuth`, Redux (`StoreProvider`, `loadTransactions`), `getClassnames`. Não exporta JWT nem repositórios.
+Camada de apresentação compartilhada: store Redux (slices, seletores memoizados, listener middleware), hooks facade, `AppProviders` / `AuthGuard` / `useAuth` e `getClassnames`. Não exporta JWT nem repositórios.
+
+Entradas separadas para o design system não arrastar o store no bundle:
+
+- `@bytebank/shared` — store, providers e hooks
+- `@bytebank/shared/utils` — utilitários puros de UI (usado pelo `@bytebank/ui`)
+- `@bytebank/shared/store` — apenas a camada de estado
+
+A organização interna e as técnicas reativas estão detalhadas em [`STATE_MANAGEMENT.md`](./STATE_MANAGEMENT.md).
 
 ### UI (`@bytebank/ui`)
 
@@ -92,11 +101,12 @@ MFE (client)
 ## Fluxo de autenticação
 
 ```text
-Login UI → AuthProvider → /auth/api/login
+Login UI → useAuth → signIn → HttpSessionGateway → /auth/api/login
   → LoginUser (InMemoryUserRepository + JwtTokenService)
   → cookie httpOnly auth-token
 shell middleware → TokenService.verify
-AuthGuard (client) → /auth/api/session → GetSession
+SessionBootstrap (client) → restoreSession → /auth/api/session → GetSession
+AuthGuard (client) → segura a árvore enquanto a sessão é desconhecida
 ```
 
 ## Como adicionar um novo módulo
@@ -120,16 +130,33 @@ Análise do repositório confirmou que estes itens **não bloqueiam** build/test
 
 Nenhuma dependência de `apps/shell`, `mfe-home`, `mfe-transactions`, `mfe-auth`, `@bytebank/ui` ou dos novos pacotes aponta para esses caminhos.
 
+## Fluxo de estado no cliente
+
+```text
+Página (intenção)
+  → hook facade (@bytebank/shared/hooks)
+  → thunk / action
+  → listener middleware (debounce, takeLatest, invalidação)
+  → use case injetado via extraArgument
+  → seletor memoizado
+  → componente memoizado
+```
+
 ## Dívida conhecida
 
-- `Header` em `@bytebank/ui` ainda chama `/auth/api/session` e logout diretamente (fora do `useAuth`). Preferível receber `user` / `onLogout` por props em uma evolução futura.
-- Arquivos antigos em `packages/shared/src` (services, jwt, types) podem permanecer no disco como residual; a API pública do pacote não os exporta mais.
+- O build do Storybook (`yarn build-storybook`) falha no `@bytebank/ui` por um problema de compilação do webpack anterior a esta etapa; os builds dos apps e os testes passam.
+- `AppHeader` é repetido em `mfe-home` e `mfe-transactions`. Centralizá-lo exigiria acoplar o design system ao store (`@bytebank/ui` já depende de `@bytebank/shared`), então a duplicação de seis linhas foi preferida ao ciclo conceitual.
+- Em terminais do Windows que entregam a cwd com a letra da unidade em minúsculo (`c:/`), o Vite carrega duas instâncias de `@vitest/expect` e a suíte não inicia. Rodar a partir de um caminho com `C:/` resolve.
 
 ## Validação
+
+`yarn test` roda os três pacotes testados em uma única instância do Vitest
+(`vitest.config.ts` na raiz usa `projects`), e `yarn lint` passa o ESLint em
+`apps` e `packages`.
 
 ```bash
 corepack yarn install
 corepack yarn build
-corepack yarn workspace @bytebank/domain test
-corepack yarn workspace @bytebank/application test
+corepack yarn lint
+corepack yarn test
 ```

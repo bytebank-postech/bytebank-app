@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.scss'
-import { AuthProvider } from '@bytebank/shared'
+import { AppProviders } from '@bytebank/shared'
 
 export const metadata: Metadata = {
   title: 'ByteBank - Autenticação',
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   )

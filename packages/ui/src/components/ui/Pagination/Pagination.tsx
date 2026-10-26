@@ -1,6 +1,6 @@
 'use client'
 import styles from './Pagination.module.scss'
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import { PaginationProps } from './Pagination.types'
 import { createPageRange, getTotalPages } from './Pagination.utils'
 import Button from '../Button/Button'
