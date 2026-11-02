@@ -4,7 +4,6 @@ import { memo, useCallback, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import {
   Button,
-  Chart,
   chartTheme,
   transactionTypeColors,
   Select,
@@ -32,6 +31,7 @@ import {
   useTransactionMutations,
 } from '@bytebank/shared'
 import { useNewTransactionForm } from '../hooks/useNewTransactionForm'
+import LazyChart from '../components/LazyChart'
 import styles from './page.module.scss'
 
 const TRANSACTION_FORM_OPTIONS: { value: TransactionType; label: string }[] = (
@@ -244,7 +244,9 @@ export default function Home() {
                 className={`${styles.iconButton} ${styles.saldoIcon}`}
                 onClick={balanceVisibility.handleToggle}
                 aria-label={
-                  balanceVisibility.isVisible ? 'Ocultar saldo' : 'Mostrar saldo'
+                  balanceVisibility.isVisible
+                    ? 'Ocultar saldo'
+                    : 'Mostrar saldo'
                 }
               >
                 {balanceVisibility.isVisible ? (
@@ -280,7 +282,7 @@ export default function Home() {
 
         <section className={styles.analytics} aria-label="Análises financeiras">
           <Paper classname={styles.chartCard}>
-            <Chart
+            <LazyChart
               title="Receitas x Despesas"
               type="line"
               series={MONTHLY_FLOW_SERIES}
@@ -289,7 +291,7 @@ export default function Home() {
             />
           </Paper>
           <Paper classname={styles.chartCard}>
-            <Chart
+            <LazyChart
               title="Distribuição por tipo"
               type="pie"
               series={TYPE_DISTRIBUTION_SERIES}
@@ -315,7 +317,9 @@ export default function Home() {
             </Typography>
             <div className={styles.analyticsExpanded}>
               <Paper classname={styles.chartCard}>
-                <Chart
+                <LazyChart
+                  enabled={isAnalyticsModalOpen}
+                  placeholderHeight={420}
                   title="Receitas x Despesas"
                   type="line"
                   series={MONTHLY_FLOW_SERIES}
@@ -324,7 +328,9 @@ export default function Home() {
                 />
               </Paper>
               <Paper classname={styles.chartCard}>
-                <Chart
+                <LazyChart
+                  enabled={isAnalyticsModalOpen}
+                  placeholderHeight={420}
                   title="Distribuição por tipo"
                   type="pie"
                   series={TYPE_DISTRIBUTION_SERIES}

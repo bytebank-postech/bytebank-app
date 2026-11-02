@@ -1,6 +1,7 @@
 export { StoreProvider } from './StoreProvider'
 export { makeStore, type AppStore, type MakeStoreOptions } from './makeStore'
 export { createAppExtra } from './createAppExtra'
+export { transactionQueryKeys } from './transactionQueryKeys'
 export { rootReducer, type RootState } from './rootReducer'
 export { useAppDispatch, useAppSelector } from './hooks'
 export type {

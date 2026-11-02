@@ -7,6 +7,7 @@ export function registerSessionListeners(startListening: AppStartListening) {
   startListening({
     matcher: isAnyOf(signOut.pending, signIn.fulfilled, signUp.fulfilled),
     effect: (_action, listenerApi) => {
+      listenerApi.extra?.queryClient?.clear()
       listenerApi.dispatch(resetTransactions())
     },
   })

@@ -17,6 +17,7 @@ import type {
   TransactionType,
 } from '@bytebank/domain'
 import { createAppAsyncThunk, toErrorMessage } from '../createAppAsyncThunk'
+import { transactionQueryKeys } from '../transactionQueryKeys'
 import type { AppExtra, RequestStatus } from '../types'
 
 export type TransactionCollectionView = 'page' | 'all'
@@ -44,7 +45,11 @@ export type TransactionsState = EntityState<Transaction, string> & {
   total: number
   totalPages: number
   view: TransactionCollectionView
-  list: { status: RequestStatus; error: string | null; requestId: string | null }
+  list: {
+    status: RequestStatus
+    error: string | null
+    requestId: string | null
+  }
   mutation: { status: RequestStatus; error: string | null }
   filters: TransactionFilters
   pendingRemovals: Record<string, PendingRemoval>
@@ -88,6 +93,15 @@ export const loadTransactionPage = createAppAsyncThunk<TransactionPage, void>(
   async (_arg, { extra, getState, rejectWithValue }) => {
     try {
       const filters = toPageFilters(getState().transactions.filters)
+      const userId = getState().session.user?.id ?? 'anonymous'
+      const queryClient = extra.queryClient
+
+      if (queryClient) {
+        return await queryClient.fetchQuery({
+          queryKey: transactionQueryKeys.page(userId, filters),
+          queryFn: () => extra.transactions.getTransactionPage.execute(filters),
+        })
+      }
 
       return await extra.transactions.getTransactionPage.execute(filters)
     } catch (error) {
@@ -100,8 +114,18 @@ export const loadTransactionPage = createAppAsyncThunk<TransactionPage, void>(
 
 export const loadAllTransactions = createAppAsyncThunk<Transaction[], void>(
   'transactions/loadAll',
-  async (_arg, { extra, rejectWithValue }) => {
+  async (_arg, { extra, getState, rejectWithValue }) => {
     try {
+      const userId = getState().session.user?.id ?? 'anonymous'
+      const queryClient = extra.queryClient
+
+      if (queryClient) {
+        return await queryClient.fetchQuery({
+          queryKey: transactionQueryKeys.all(userId),
+          queryFn: () => extra.transactions.listTransactions.execute(),
+        })
+      }
+
       return await extra.transactions.listTransactions.execute()
     } catch (error) {
       return rejectWithValue(
@@ -162,17 +186,20 @@ export type CreateTransactionInput = {
 export const createTransaction = createAppAsyncThunk<
   TransactionMutationResult,
   CreateTransactionInput
->('transactions/create', async ({ data, files = [] }, { extra, rejectWithValue }) => {
-  try {
-    const created = await extra.transactions.createTransaction.execute(data)
+>(
+  'transactions/create',
+  async ({ data, files = [] }, { extra, rejectWithValue }) => {
+    try {
+      const created = await extra.transactions.createTransaction.execute(data)
 
-    return await attachFiles(extra, created, files)
-  } catch (error) {
-    return rejectWithValue(
-      toErrorMessage(error, 'Não foi possível criar a transação.')
-    )
+      return await attachFiles(extra, created, files)
+    } catch (error) {
+      return rejectWithValue(
+        toErrorMessage(error, 'Não foi possível criar a transação.')
+      )
+    }
   }
-})
+)
 
 export type UpdateTransactionInput = {
   id: string
@@ -183,17 +210,23 @@ export type UpdateTransactionInput = {
 export const updateTransaction = createAppAsyncThunk<
   TransactionMutationResult,
   UpdateTransactionInput
->('transactions/update', async ({ id, data, files = [] }, { extra, rejectWithValue }) => {
-  try {
-    const updated = await extra.transactions.updateTransaction.execute(id, data)
+>(
+  'transactions/update',
+  async ({ id, data, files = [] }, { extra, rejectWithValue }) => {
+    try {
+      const updated = await extra.transactions.updateTransaction.execute(
+        id,
+        data
+      )
 
-    return await attachFiles(extra, updated, files)
-  } catch (error) {
-    return rejectWithValue(
-      toErrorMessage(error, 'Não foi possível atualizar a transação.')
-    )
+      return await attachFiles(extra, updated, files)
+    } catch (error) {
+      return rejectWithValue(
+        toErrorMessage(error, 'Não foi possível atualizar a transação.')
+      )
+    }
   }
-})
+)
 
 export const deleteTransactions = createAppAsyncThunk<string[], string[]>(
   'transactions/deleteMany',
@@ -220,20 +253,23 @@ export type RemoveAttachmentInput = {
 export const removeTransactionAttachment = createAppAsyncThunk<
   RemoveAttachmentInput,
   RemoveAttachmentInput
->('transactions/removeAttachment', async (input, { extra, rejectWithValue }) => {
-  try {
-    await extra.transactions.removeTransactionAttachment.execute(
-      input.transactionId,
-      input.attachmentId
-    )
+>(
+  'transactions/removeAttachment',
+  async (input, { extra, rejectWithValue }) => {
+    try {
+      await extra.transactions.removeTransactionAttachment.execute(
+        input.transactionId,
+        input.attachmentId
+      )
 
-    return input
-  } catch (error) {
-    return rejectWithValue(
-      toErrorMessage(error, 'Não foi possível remover o anexo.')
-    )
+      return input
+    } catch (error) {
+      return rejectWithValue(
+        toErrorMessage(error, 'Não foi possível remover o anexo.')
+      )
+    }
   }
-})
+)
 
 const mutationThunks = [
   createTransaction,

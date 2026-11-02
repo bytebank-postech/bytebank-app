@@ -5,12 +5,15 @@ import {
   createTransaction,
   deleteTransactions,
   loadTransactionPage,
+  removeTransactionAttachment,
   setMonth,
   setPage,
   setPageSize,
   setSearch,
   setType,
+  updateTransaction,
 } from '../slices/transactionsSlice'
+import { transactionQueryKeys } from '../transactionQueryKeys'
 import type { AppStartListening } from './createAppListenerMiddleware'
 
 export const SEARCH_DEBOUNCE_MS = 350
@@ -25,6 +28,14 @@ const isFilterChange = isAnyOf(
 )
 
 const isCollectionInvalidated = isAnyOf(
+  createTransaction.fulfilled,
+  updateTransaction.fulfilled,
+  deleteTransactions.fulfilled,
+  deleteTransactions.rejected,
+  removeTransactionAttachment.fulfilled
+)
+
+const shouldReloadPage = isAnyOf(
   createTransaction.fulfilled,
   deleteTransactions.fulfilled,
   deleteTransactions.rejected
@@ -51,6 +62,12 @@ export function registerTransactionsListeners(
   startListening({
     matcher: isCollectionInvalidated,
     effect: async (_action, listenerApi) => {
+      const userId = listenerApi.getState().session.user?.id ?? 'anonymous'
+      await listenerApi.extra?.queryClient?.invalidateQueries({
+        queryKey: transactionQueryKeys.forUser(userId),
+      })
+
+      if (!shouldReloadPage(_action)) return
       if (selectCollectionView(listenerApi.getState()) !== 'page') return
 
       listenerApi.cancelActiveListeners()

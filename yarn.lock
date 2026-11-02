@@ -264,6 +264,7 @@ __metadata:
     "@bytebank/domain": "workspace:*"
     "@bytebank/infrastructure": "workspace:*"
     "@reduxjs/toolkit": ^2.12.0
+    "@tanstack/react-query": ^5.105.1
     "@types/react": ^19
     react: ^19.2.4
     react-redux: ^9.3.0
@@ -2365,6 +2366,28 @@ __metadata:
   dependencies:
     "@swc/counter": ^0.1.3
   checksum: bdf9d93afff2a01e1cb9b2482d7a8ddb87cfe75e49455b87314be609bdf7761b22de44f546a8e10c2dc7d06869c505e87f5c1ed26af184e11cfab624a4d1a636
+  languageName: node
+  linkType: hard
+
+"@tanstack/query-core@npm:5.105.2":
+  version: 5.105.2
+  resolution: "@tanstack/query-core@npm:5.105.2"
+  checksum: 574d72893241609f34b087b121b61ce2797a6f44a28773cd4eb04c9120fdb3d8953ecf546fb9f96d87d7d269ea705b05da380536cf7843249700e27c399f3f75
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.105.1":
+  version: 5.105.2
+  resolution: "@tanstack/react-query@npm:5.105.2"
+  dependencies:
+    "@tanstack/query-core": 5.105.2
+  peerDependencies:
+    "@types/react": ^18 || ^19
+    react: ^18 || ^19
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 0ab23249598eb6ec01f12aed94fb045d248e8c038a89badb966c71f918d62821977754a8ae2c52f98ee19ef0aa3fc88f6ff55097fab835ec3b741dc0622b40ea
   languageName: node
   linkType: hard
 

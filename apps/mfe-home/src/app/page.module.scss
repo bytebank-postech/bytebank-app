@@ -70,6 +70,10 @@
   padding: 20px;
 }
 
+.chartPlaceholder {
+  min-height: 320px;
+}
+
 .extratoColumn {
   grid-column: 3;
   grid-row: 1 / -1;
