@@ -9,12 +9,21 @@ import {
   Pie,
   Cell,
 } from 'recharts'
-import { RechartsDevtools } from '@recharts/devtools'
+import dynamic from 'next/dynamic'
 import Typography from '../Typography/Typography'
 import { ChartProps } from './Chart.types'
 import { chartMap } from './Chart.config'
 import { chartTheme } from './Chart.theme'
 import styles from './Chart.module.scss'
+
+const RechartsDevtools =
+  process.env.NODE_ENV === 'development'
+    ? dynamic(
+        () =>
+          import('@recharts/devtools').then((module) => module.RechartsDevtools),
+        { ssr: false }
+      )
+    : () => null
 
 type TooltipEntry = {
   name?: string

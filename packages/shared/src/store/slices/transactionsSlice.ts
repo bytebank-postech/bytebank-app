@@ -18,6 +18,7 @@ import type {
 } from '@bytebank/domain'
 import { createAppAsyncThunk, toErrorMessage } from '../createAppAsyncThunk'
 import { transactionQueryKeys } from '../transactionQueryKeys'
+import { takeTransactionNavigationCache } from '../../cache/transactionNavigationCache'
 import type { AppExtra, RequestStatus } from '../types'
 
 export type TransactionCollectionView = 'page' | 'all'
@@ -95,6 +96,9 @@ export const loadTransactionPage = createAppAsyncThunk<TransactionPage, void>(
       const filters = toPageFilters(getState().transactions.filters)
       const userId = getState().session.user?.id ?? 'anonymous'
       const queryClient = extra.queryClient
+
+      const prefetched = takeTransactionNavigationCache(userId, filters)
+      if (prefetched) return prefetched
 
       if (queryClient) {
         return await queryClient.fetchQuery({

@@ -9,7 +9,6 @@ import {
   Input,
   Select,
   Menu,
-  EditTransactionModal,
   Datepicker,
   Pagination,
 } from '@bytebank/ui'
@@ -26,6 +25,7 @@ import {
   useTransactionMutations,
 } from '@bytebank/shared'
 import { MdDelete, MdFilterAltOff, MdManageSearch } from 'react-icons/md'
+import LazyEditTransactionModal from '../components/LazyEditTransactionModal'
 import styles from './page.module.scss'
 
 const TRANSACTION_TYPE_OPTIONS = [
@@ -379,7 +379,7 @@ export default function TransactionsPage() {
           ) : null}
 
           {editingTransaction && (
-            <EditTransactionModal
+            <LazyEditTransactionModal
               isOpen
               onClose={handleCloseEditModal}
               initial={{

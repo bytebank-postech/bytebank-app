@@ -13,7 +13,6 @@ import {
   TransactionItem,
   Menu,
   Modal,
-  EditTransactionModal,
 } from '@bytebank/ui'
 import { MdOpenInFull, MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import type {
@@ -29,9 +28,11 @@ import {
   useDashboardAnalytics,
   useTransactionCollection,
   useTransactionMutations,
+  useTransactionNavigationPrefetch,
 } from '@bytebank/shared'
 import { useNewTransactionForm } from '../hooks/useNewTransactionForm'
 import LazyChart from '../components/LazyChart'
+import LazyEditTransactionModal from '../components/LazyEditTransactionModal'
 import styles from './page.module.scss'
 
 const TRANSACTION_FORM_OPTIONS: { value: TransactionType; label: string }[] = (
@@ -113,6 +114,7 @@ export default function Home() {
   const { balance, monthlyFlow, typeDistribution, statementPreview } =
     useDashboardAnalytics()
   const mutations = useTransactionMutations()
+  const prefetchTransactions = useTransactionNavigationPrefetch()
   const balanceVisibility = useBalanceVisibility()
   const form = useNewTransactionForm()
 
@@ -219,7 +221,7 @@ export default function Home() {
   return (
     <main className={styles.dashboard}>
       <aside className={styles.sidebar}>
-        <Menu currentPath={pathname} />
+        <Menu currentPath={pathname} onTransactionsIntent={prefetchTransactions} />
       </aside>
 
       <div className={styles.mainStack}>
@@ -457,7 +459,7 @@ export default function Home() {
         </Paper>
 
         {editingTransaction && (
-          <EditTransactionModal
+          <LazyEditTransactionModal
             isOpen
             onClose={handleCloseEditModal}
             initial={{

@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
   sassOptions: {
     loadPaths: [path.resolve(__dirname, '../../packages/ui/src/styles')],
   },
+  async headers() {
+    return [
+      {
+        source: '/api/transactions/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+        ],
+      },
+    ]
+  },
   async rewrites() {
     return {
       beforeFiles: [],

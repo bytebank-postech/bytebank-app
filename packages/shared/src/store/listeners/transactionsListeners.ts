@@ -14,6 +14,7 @@ import {
   updateTransaction,
 } from '../slices/transactionsSlice'
 import { transactionQueryKeys } from '../transactionQueryKeys'
+import { clearTransactionNavigationCache } from '../../cache/transactionNavigationCache'
 import type { AppStartListening } from './createAppListenerMiddleware'
 
 export const SEARCH_DEBOUNCE_MS = 350
@@ -62,6 +63,7 @@ export function registerTransactionsListeners(
   startListening({
     matcher: isCollectionInvalidated,
     effect: async (_action, listenerApi) => {
+      clearTransactionNavigationCache()
       const userId = listenerApi.getState().session.user?.id ?? 'anonymous'
       await listenerApi.extra?.queryClient?.invalidateQueries({
         queryKey: transactionQueryKeys.forUser(userId),
