@@ -58,7 +58,7 @@ export default function LazyChart({
   }, [enabled, shouldLoad, supportsIntersectionObserver])
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} style={{ width: '100%', minWidth: 0 }}>
       {enabled && (shouldLoad || !supportsIntersectionObserver) ? (
         <Chart {...chartProps} />
       ) : enabled ? (

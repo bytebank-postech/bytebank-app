@@ -60,7 +60,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 
-  .chartCard {
+.chartCard {
     min-height: 460px;
   }
 }
@@ -392,7 +392,10 @@
   .welcomeLeft {
     gap: 6px;
   }
-
+   .analytics{
+    display: flex;
+    flex-direction: column;
+  }
   .analyticsHeader {
     align-items: flex-start;
     flex-direction: column;
@@ -410,5 +413,10 @@
 
   .seeMoreLink {
     padding: 6px 0;
+  }
+ 
+  .chartCard{
+    width: 100%;
+    display: flex;
   }
 }
