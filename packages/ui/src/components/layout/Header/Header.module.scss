@@ -31,3 +31,41 @@
     background-color: rgb(255 255 255 / 15%);
   }
 }
+
+.mobileMenu {
+  display: none;
+  position: relative;
+  margin-right: auto;
+}
+
+.menuToggle {
+  cursor: pointer;
+  padding: 8px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+}
+
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 200px;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+  border-radius: 8px;
+}
+
+@media (max-width: 1000px) {
+  .header {
+    max-height: none;
+    padding: 16px;
+  }
+
+  .content {
+    gap: 12px;
+  }
+
+  .mobileMenu {
+    display: block;
+  }
+}

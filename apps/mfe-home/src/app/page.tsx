@@ -221,7 +221,11 @@ export default function Home() {
   return (
     <main className={styles.dashboard}>
       <aside className={styles.sidebar}>
-        <Menu currentPath={pathname} onTransactionsIntent={prefetchTransactions} />
+        <Menu
+          currentPath={pathname}
+          onTransactionsIntent={prefetchTransactions}
+          placement="desktop"
+        />
       </aside>
 
       <div className={styles.mainStack}>

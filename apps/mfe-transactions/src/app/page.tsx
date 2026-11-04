@@ -182,7 +182,9 @@ export default function TransactionsPage() {
     )
     if (!confirmed) return
 
-    void mutations.remove(selection.selectedIds).finally(selection.handleDisable)
+    void mutations
+      .remove(selection.selectedIds)
+      .finally(selection.handleDisable)
   }, [mutations, selection])
 
   const handleToggleAll = useCallback(
@@ -239,7 +241,7 @@ export default function TransactionsPage() {
   return (
     <main className={styles.page}>
       <aside className={styles.sidebar}>
-        <Menu currentPath="/transactions" />
+        <Menu currentPath="/transactions" placement="desktop" />
       </aside>
 
       <section className={styles.content}>
