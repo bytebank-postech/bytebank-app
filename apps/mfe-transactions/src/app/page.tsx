@@ -11,7 +11,7 @@ import {
   Menu,
   Datepicker,
   Pagination,
-} from '@bytebank/ui'
+} from '@bytebank/ui/core'
 import type {
   Transaction,
   TransactionCategory,

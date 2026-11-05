@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Typography } from '@bytebank/ui'
+import { Typography } from '@bytebank/ui/core'
 import styles from './AuthLayout.module.scss'
 
 type AuthLayoutProps = {

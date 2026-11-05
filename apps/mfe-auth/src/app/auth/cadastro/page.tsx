@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Button, Input, Typography } from '@bytebank/ui'
+import { Button, Input, Typography } from '@bytebank/ui/core'
 import AuthLayout from '../../../components/auth/AuthLayout'
 import layoutStyles from '../../../components/auth/AuthLayout.module.scss'
 import useCadastroPage from './useCadastroPage'

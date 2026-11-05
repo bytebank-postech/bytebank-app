@@ -1,7 +1,10 @@
 'use client'
 
 import Modal from '../ui/Modal/Modal'
-import { Input, Select, Typography, Button } from '../ui'
+import Input from '../ui/Input/Input'
+import Select from '../ui/Select/Select'
+import Typography from '../ui/Typography/Typography'
+import Button from '../ui/Button/Button'
 import styles from './EditTransactionModal.module.scss'
 import {
   amountForType,

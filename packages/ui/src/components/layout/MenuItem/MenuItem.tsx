@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import style from './MenuItem.module.scss'
-import { Typography } from '../../ui'
+import Typography from '../../ui/Typography/Typography'
 
 export default function MenuItem({
   children,

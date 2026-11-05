@@ -75,6 +75,33 @@ de 10% sem justificativa registrada. A validação definitiva do orçamento deve
 ser feita pelo payload transferido da rota crítica, e não apenas por esta soma
 de artefatos.
 
+## Isolamento de gráficos e edição — 05/11/2026
+
+As aplicações usam `@bytebank/ui/core` na renderização inicial. Os wrappers
+dinâmicos usam `@bytebank/ui/chart` e `@bytebank/ui/edit-transaction-modal`.
+A entrada antiga `@bytebank/ui` e os caminhos de estilos permanecem disponíveis
+para compatibilidade, mas não devem ser usados para antecipar os componentes
+pesados na Home. Os imports internos de Header, MenuItem e do modal apontam
+diretamente para os componentes básicos, sem voltar ao agregador antigo.
+
+Comparação do JavaScript inicial da Home, sem compressão: aproximadamente
+1.023.084 bytes no relatório Lighthouse anterior e 647.626 bytes na união dos
+chunks de entrada do novo build, uma redução de cerca de 36,7%. Isso mede
+arquivos iniciais, não a nota Lighthouse nem o total transferido após os
+gráficos carregarem. O código dos gráficos e do modal continua disponível em
+chunks assíncronos.
+
+Verificação em Chromium com build de produção e sessão/transações simuladas:
+
+- Antes da visibilidade dos gráficos, nenhum chunk de gráfico ou edição foi solicitado.
+- Ao disparar a visibilidade, os gráficos carregaram sem carregar o modal.
+- Ao escolher Editar, o modal foi solicitado e abriu sem erros de navegador.
+
+Os gráficos continuam usando IntersectionObserver com a margem existente de
+200 px. Se estiverem próximos da área visível, seus chunks serão carregados
+logo após a Home aparecer. A melhoria da nota deve ser confirmada com novas
+medições Lighthouse nas mesmas condições; não se presume uma nota específica.
+
 ## Próxima automação
 
 ### Pré-carregamento entre microfrontends

@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Typography } from '../../ui'
+import Typography from '../../ui/Typography/Typography'
 import Avatar from '../../Avatar/Avatar'
 import Menu from '../Menu/Menu'
 import style from './Header.module.scss'

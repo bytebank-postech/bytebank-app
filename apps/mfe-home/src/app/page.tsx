@@ -13,7 +13,7 @@ import {
   TransactionItem,
   Menu,
   Modal,
-} from '@bytebank/ui'
+} from '@bytebank/ui/core'
 import { MdOpenInFull, MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import type {
   Transaction,

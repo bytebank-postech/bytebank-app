@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { Header } from '@bytebank/ui'
+import { Header } from '@bytebank/ui/core'
 import { useAuth, useTransactionNavigationPrefetch } from '@bytebank/shared'
 
 export default function AppHeader() {

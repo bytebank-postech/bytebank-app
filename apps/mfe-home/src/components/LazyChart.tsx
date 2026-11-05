@@ -2,11 +2,11 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
-import type { ChartProps } from '@bytebank/ui'
+import type { ChartProps } from '@bytebank/ui/chart'
 import styles from '../app/page.module.scss'
 
 const Chart = dynamic(
-  () => import('@bytebank/ui').then((module) => module.Chart),
+  () => import('@bytebank/ui/chart'),
   {
     ssr: false,
     loading: () => <ChartPlaceholder />,
