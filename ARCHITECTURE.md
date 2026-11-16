@@ -83,7 +83,7 @@ Componentes visuais. Tipos de domínio vêm de `@bytebank/domain`. Sem chamadas 
 
 ### Apps
 
-- **shell** — gateway, middleware JWT, API de transações (controllers → use cases server)
+- **shell** — gateway, `proxy.ts` (JWT), API de transações (controllers autenticados → use cases server por usuário)
 - **mfe-home / mfe-transactions** — UI + use cases client
 - **mfe-auth** — login/session (controllers → use cases auth)
 
@@ -93,9 +93,9 @@ Componentes visuais. Tipos de domínio vêm de `@bytebank/domain`. Sem chamadas 
 MFE (client)
   → createClientTransactionUseCases()
   → HttpTransactionRepository
-  → shell /api/transactions
-  → createServerTransactionUseCases()
-  → InMemoryTransactionRepository
+  → shell /api/transactions (withAuthenticatedUser)
+  → createServerTransactionUseCases(user.id)
+  → InMemoryTransactionRepository(ownerId)
 ```
 
 ## Fluxo de autenticação
@@ -104,7 +104,8 @@ MFE (client)
 Login UI → useAuth → signIn → HttpSessionGateway → /auth/api/login
   → LoginUser (InMemoryUserRepository + JwtTokenService)
   → cookie httpOnly auth-token
-shell middleware → TokenService.verify
+shell proxy.ts + cada rota da API → TokenService.verify
+falha de API → sessionListener reconsulta a sessão → sessionExpired → AuthGuard
 SessionBootstrap (client) → restoreSession → /auth/api/session → GetSession
 AuthGuard (client) → segura a árvore enquanto a sessão é desconhecida
 ```

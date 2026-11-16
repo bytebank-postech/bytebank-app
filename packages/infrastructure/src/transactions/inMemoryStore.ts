@@ -1,5 +1,8 @@
 import type { Transaction } from '@bytebank/domain'
+import { DEMO_USER_ID } from '../seed'
 import transactionsData from './data/transactions.json'
+
+export type StoredTransaction = Transaction & { ownerId: string }
 
 export type StoredAttachment = {
   transactionId: string
@@ -9,17 +12,24 @@ export type StoredAttachment = {
 }
 
 const globalStore = globalThis as unknown as {
-  bytebankTransactions?: Transaction[]
+  bytebankOwnedTransactions?: StoredTransaction[]
   bytebankAttachments?: Map<string, StoredAttachment>
 }
 
+const seedTransactions = (transactionsData as Transaction[]).map(
+  (transaction): StoredTransaction => ({
+    ...transaction,
+    ownerId: DEMO_USER_ID,
+  })
+)
+
 export const transactions =
-  globalStore.bytebankTransactions || (transactionsData as Transaction[])
+  globalStore.bytebankOwnedTransactions || seedTransactions
 
 export const attachments =
   globalStore.bytebankAttachments || new Map<string, StoredAttachment>()
 
 if (process.env.NODE_ENV !== 'production') {
-  globalStore.bytebankTransactions = transactions
+  globalStore.bytebankOwnedTransactions = transactions
   globalStore.bytebankAttachments = attachments
 }

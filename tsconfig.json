@@ -7,6 +7,6 @@
       }
     ]
   },
-  "include": ["next.config.ts", "next-env.d.ts"],
+  "include": ["next.config.ts", "next-env.d.ts", "security-headers.ts"],
   "exclude": ["node_modules", ".next", "apps", "packages", "src"]
 }

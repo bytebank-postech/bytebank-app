@@ -1,25 +1,22 @@
 import { NextResponse } from 'next/server'
-import { NotFoundError, ValidationError } from '@bytebank/application'
 import { createServerTransactionUseCases } from '@bytebank/infrastructure/server'
-
-const useCases = createServerTransactionUseCases()
+import { withAuthenticatedUser } from '@/server/authentication'
+import { toErrorResponse } from '@/server/errorResponse'
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withAuthenticatedUser<Params>(async (_request, { params }, user) => {
   const { id } = await params
   try {
+    const useCases = createServerTransactionUseCases(user.id)
     const attachments = await useCases.listTransactionAttachments.execute(id)
     return NextResponse.json(attachments)
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    }
-    throw error
+    return toErrorResponse(error)
   }
-}
+})
 
-export async function POST(request: Request, { params }: Params) {
+export const POST = withAuthenticatedUser<Params>(async (request, { params }, user) => {
   const { id } = await params
   const formData = await request.formData()
   const files = formData
@@ -35,18 +32,13 @@ export async function POST(request: Request, { params }: Params) {
         content: await file.arrayBuffer(),
       }))
     )
+    const useCases = createServerTransactionUseCases(user.id)
     const created = await useCases.addTransactionAttachments.execute(
       id,
       uploads
     )
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    }
-    if (error instanceof ValidationError) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-    throw error
+    return toErrorResponse(error)
   }
-}
+})

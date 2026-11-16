@@ -1,5 +1,6 @@
 import path from 'node:path'
 import type { NextConfig } from 'next'
+import { securityHeaders } from '../../security-headers'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -14,6 +15,10 @@ const nextConfig: NextConfig = {
   ],
   sassOptions: {
     loadPaths: [path.resolve(__dirname, '../../packages/ui/src/styles')],
+  },
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }]
   },
 }
 

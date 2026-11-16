@@ -10,14 +10,15 @@ export type MakeStoreOptions = {
 }
 
 export function makeStore({ extra, preloadedState }: MakeStoreOptions = {}) {
-  const listenerMiddleware = createRegisteredListenerMiddleware()
+  const resolvedExtra = extra ?? createAppExtra()
+  const listenerMiddleware = createRegisteredListenerMiddleware(resolvedExtra)
 
   return configureStore({
     reducer: rootReducer,
     preloadedState,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
-        thunk: { extraArgument: extra ?? createAppExtra() },
+        thunk: { extraArgument: resolvedExtra },
         serializableCheck: { ignoredActionPaths: ['meta.arg.files'] },
       }).prepend(listenerMiddleware.middleware),
   })

@@ -59,10 +59,18 @@ export const signOut = createAppAsyncThunk<void, void>(
   (_arg, { extra }) => extra.session.logout()
 )
 
+export const SESSION_EXPIRED_MESSAGE = 'Sua sessão expirou. Entre novamente.'
+
 const sessionSlice = createSlice({
   name: 'session',
   initialState,
-  reducers: {},
+  reducers: {
+    sessionExpired(state) {
+      state.user = null
+      state.status = 'anonymous'
+      state.error = SESSION_EXPIRED_MESSAGE
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(restoreSession.fulfilled, (state, action) => {
@@ -95,5 +103,7 @@ const sessionSlice = createSlice({
       })
   },
 })
+
+export const { sessionExpired } = sessionSlice.actions
 
 export const sessionReducer = sessionSlice.reducer

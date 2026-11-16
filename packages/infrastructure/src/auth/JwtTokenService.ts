@@ -1,9 +1,11 @@
 import type { TokenService } from '@bytebank/application'
 import type { AuthUser } from '@bytebank/domain'
 import { jwtVerify, SignJWT } from 'jose'
+import { SESSION_DURATION_SECONDS } from './sessionCookie'
 
 const issuer = 'bytebank'
 const audience = 'bytebank-app'
+const algorithm = 'HS256'
 
 function getSecret() {
   const secret = process.env.JWT_SECRET
@@ -19,10 +21,10 @@ function getSecret() {
 export class JwtTokenService implements TokenService {
   async sign(user: AuthUser): Promise<string> {
     return new SignJWT({ name: user.name, email: user.email })
-      .setProtectedHeader({ alg: 'HS256' })
+      .setProtectedHeader({ alg: algorithm })
       .setSubject(user.id)
       .setIssuedAt()
-      .setExpirationTime('24h')
+      .setExpirationTime(`${SESSION_DURATION_SECONDS}s`)
       .setIssuer(issuer)
       .setAudience(audience)
       .sign(getSecret())
@@ -33,6 +35,7 @@ export class JwtTokenService implements TokenService {
       const { payload } = await jwtVerify(token, getSecret(), {
         issuer,
         audience,
+        algorithms: [algorithm],
       })
       if (
         typeof payload.sub !== 'string' ||

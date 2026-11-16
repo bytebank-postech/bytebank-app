@@ -28,7 +28,14 @@ export {
   type TransactionCollectionView,
   type TransactionFilters,
 } from './slices/transactionsSlice'
-export { restoreSession, signIn, signOut, signUp } from './slices/sessionSlice'
+export {
+  SESSION_EXPIRED_MESSAGE,
+  restoreSession,
+  sessionExpired,
+  signIn,
+  signOut,
+  signUp,
+} from './slices/sessionSlice'
 export {
   hydratePreferences,
   toggleBalanceVisible,

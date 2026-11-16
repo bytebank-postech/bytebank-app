@@ -1,5 +1,6 @@
 import path from 'node:path'
 import type { NextConfig } from 'next'
+import { securityHeaders } from '../../security-headers'
 
 const mfeHomeUrl = process.env.MFE_HOME_URL ?? 'http://localhost:3001'
 const mfeTransactionsUrl =
@@ -8,6 +9,7 @@ const mfeAuthUrl = process.env.MFE_AUTH_URL ?? 'http://localhost:3003'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  poweredByHeader: false,
   transpilePackages: [
     '@bytebank/ui',
     '@bytebank/shared',
@@ -20,6 +22,14 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+      {
+        source: '/auth/api/:path*',
+        headers: [{ key: 'Cache-Control', value: 'no-store' }],
+      },
       {
         source: '/api/transactions/:path*',
         headers: [

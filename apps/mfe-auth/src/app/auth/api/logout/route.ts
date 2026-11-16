@@ -1,11 +1,5 @@
-import { NextResponse } from 'next/server'
+import { createLogoutResponse } from '@/server/sessionResponse'
 
 export async function POST() {
-  const response = NextResponse.json({
-    message: 'Logout realizado com sucesso',
-  })
-
-  response.cookies.delete('auth-token')
-
-  return response
+  return createLogoutResponse()
 }

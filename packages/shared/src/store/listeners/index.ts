@@ -5,9 +5,12 @@ import {
 import { registerPreferencesListeners } from './preferencesListeners'
 import { registerSessionListeners } from './sessionListeners'
 import { registerTransactionsListeners } from './transactionsListeners'
+import type { AppExtra } from '../types'
 
-export function createRegisteredListenerMiddleware(): AppListenerMiddleware {
-  const listenerMiddleware = createAppListenerMiddleware()
+export function createRegisteredListenerMiddleware(
+  extra?: AppExtra
+): AppListenerMiddleware {
+  const listenerMiddleware = createAppListenerMiddleware(extra)
 
   registerTransactionsListeners(listenerMiddleware.startListening)
   registerSessionListeners(listenerMiddleware.startListening)

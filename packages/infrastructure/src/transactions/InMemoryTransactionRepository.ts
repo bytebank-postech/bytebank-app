@@ -6,7 +6,7 @@ import type {
   TransactionRepository,
 } from '@bytebank/application'
 import type { Transaction, TransactionAttachment } from '@bytebank/domain'
-import { attachments, transactions } from './inMemoryStore'
+import { attachments, transactions, type StoredTransaction } from './inMemoryStore'
 
 function normalize(value: string) {
   return value
@@ -19,13 +19,36 @@ function createId() {
   return crypto.randomUUID()
 }
 
+function toTransaction(stored: StoredTransaction): Transaction {
+  const { ownerId, ...transaction } = stored
+  void ownerId
+  return transaction
+}
+
 export class InMemoryTransactionRepository implements TransactionRepository {
+  constructor(private readonly ownerId: string) {}
+
+  private ownedTransactions(): StoredTransaction[] {
+    return transactions.filter((item) => item.ownerId === this.ownerId)
+  }
+
+  private findOwnedIndex(id: string): number {
+    return transactions.findIndex(
+      (item) => item.id === id && item.ownerId === this.ownerId
+    )
+  }
+
+  private findOwned(id: string): StoredTransaction | undefined {
+    return transactions[this.findOwnedIndex(id)]
+  }
+
   async list(): Promise<Transaction[]> {
-    return transactions
+    return this.ownedTransactions().map(toTransaction)
   }
 
   async getById(id: string): Promise<Transaction | null> {
-    return transactions.find((item) => item.id === id) ?? null
+    const transaction = this.findOwned(id)
+    return transaction ? toTransaction(transaction) : null
   }
 
   async getPage(filters: TransactionPageFilters): Promise<TransactionPage> {
@@ -35,7 +58,7 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     const type = filters.type
     const month = filters.month
 
-    const filtered = transactions
+    const filtered = this.ownedTransactions()
       .filter((transaction) => {
         const matchesSearch =
           !search ||
@@ -54,7 +77,7 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     const start = (currentPage - 1) * pageSize
 
     return {
-      items: filtered.slice(start, start + pageSize),
+      items: filtered.slice(start, start + pageSize).map(toTransaction),
       total,
       page: currentPage,
       pageSize,
@@ -63,34 +86,45 @@ export class InMemoryTransactionRepository implements TransactionRepository {
   }
 
   async create(data: Omit<Transaction, 'id'>): Promise<Transaction> {
-    const newTransaction: Transaction = {
+    const newTransaction: StoredTransaction = {
       ...data,
       id: createId(),
       attachments: data.attachments ?? [],
+      ownerId: this.ownerId,
     }
     transactions.push(newTransaction)
-    return newTransaction
+    return toTransaction(newTransaction)
   }
 
   async update(
     id: string,
     data: Partial<Transaction>
   ): Promise<Transaction | null> {
-    const index = transactions.findIndex((item) => item.id === id)
+    const index = this.findOwnedIndex(id)
     if (index === -1) return null
-    transactions[index] = { ...transactions[index], ...data, id }
-    return transactions[index]
+    transactions[index] = {
+      ...transactions[index],
+      ...data,
+      id,
+      ownerId: this.ownerId,
+    }
+    return toTransaction(transactions[index])
   }
 
   async delete(id: string): Promise<void> {
-    const index = transactions.findIndex((item) => item.id === id)
-    if (index !== -1) transactions.splice(index, 1)
+    const index = this.findOwnedIndex(id)
+    if (index === -1) return
+
+    const [removed] = transactions.splice(index, 1)
+    for (const attachment of removed.attachments ?? []) {
+      attachments.delete(attachment.id)
+    }
   }
 
   async listAttachments(
     transactionId: string
   ): Promise<TransactionAttachment[] | null> {
-    const transaction = transactions.find((item) => item.id === transactionId)
+    const transaction = this.findOwned(transactionId)
     if (!transaction) return null
     return transaction.attachments ?? []
   }
@@ -99,7 +133,7 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     transactionId: string,
     files: AttachmentUpload[]
   ): Promise<TransactionAttachment[] | null> {
-    const transaction = transactions.find((item) => item.id === transactionId)
+    const transaction = this.findOwned(transactionId)
     if (!transaction) return null
 
     const created = files.map((file) => {
@@ -128,7 +162,7 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     transactionId: string,
     attachmentId: string
   ): Promise<boolean> {
-    const transaction = transactions.find((item) => item.id === transactionId)
+    const transaction = this.findOwned(transactionId)
     const attachment = attachments.get(attachmentId)
     if (
       !transaction ||
@@ -149,8 +183,11 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     transactionId: string,
     attachmentId: string
   ): Promise<StoredAttachmentContent | null> {
+    const transaction = this.findOwned(transactionId)
     const attachment = attachments.get(attachmentId)
-    if (!attachment || attachment.transactionId !== transactionId) return null
+    if (!transaction || !attachment || attachment.transactionId !== transactionId) {
+      return null
+    }
     return {
       name: attachment.name,
       mimeType: attachment.mimeType,

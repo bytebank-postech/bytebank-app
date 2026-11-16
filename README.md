@@ -67,7 +67,9 @@ comunicam na rede interna. Para encerrar:
 docker compose down
 ```
 
-Use uma chave forte em `JWT_SECRET` fora do ambiente local. Transações e
+Use uma chave forte em `JWT_SECRET` fora do ambiente local; em
+`corepack yarn start` (modo produção sem Docker) a variável é obrigatória e
+deve estar exportada no terminal. Transações e
 anexos usam a API mock em memória e são reinicializados ao recriar o `shell`.
 Para deploy com HTTPS, configure `COOKIE_SECURE=true`; mantenha `false` apenas
 ao testar localmente em HTTP.
@@ -81,7 +83,8 @@ ao testar localmente em HTTP.
 - Busca, filtros por tipo/mês e paginação server-side.
 - Redux Toolkit centraliza transações, sessão e preferências, com coleção normalizada e seletores memoizados.
 - Busca com debounce, cancelamento de requisições superadas e exclusão otimista com rollback, via listener middleware.
-- JWT em cookie HTTP-only; middleware protege rotas privadas.
+- JWT em cookie HTTP-only com sessão de 8 horas; `proxy.ts` e cada rota da API validam a sessão.
+- Transações e anexos isolados por usuário; senhas com hash `scrypt` e limite de tentativas de login. Detalhes em `AUTH_GUIDE.md`.
 
 ## Storybook e roteiro de apresentação
 
@@ -113,7 +116,7 @@ Roteiro sugerido para a demonstração: login → Home → nova transação com 
 
 ```text
 apps/
-  shell/                # gateway, middleware JWT e API mock
+  shell/                # gateway, proxy JWT e API mock
   mfe-home/             # Home e análises financeiras
   mfe-transactions/     # listagem e gestão de transações
   mfe-auth/             # autenticação

@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["security-headers.ts"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -7,10 +8,12 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "passThroughEnv": ["JWT_SECRET", "COOKIE_SECURE"]
     },
     "start": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "passThroughEnv": ["JWT_SECRET", "COOKIE_SECURE"]
     },
     "storybook": {
       "cache": false,

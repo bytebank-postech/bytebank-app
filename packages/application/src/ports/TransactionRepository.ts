@@ -1,4 +1,5 @@
 import type {
+  DashboardSummary,
   Transaction,
   TransactionAttachment,
   TransactionType,
@@ -34,7 +35,8 @@ export type StoredAttachmentContent = {
 }
 
 export interface TransactionRepository {
-  list(): Promise<Transaction[]>
+  list(signal?: AbortSignal): Promise<Transaction[]>
+  getDashboard?(signal?: AbortSignal): Promise<DashboardSummary>
   getById(id: string): Promise<Transaction | null>
   getPage(filters: TransactionPageFilters): Promise<TransactionPage>
   create(data: Omit<Transaction, 'id'>): Promise<Transaction>

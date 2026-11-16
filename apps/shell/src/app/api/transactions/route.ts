@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server'
 import type { TransactionType } from '@bytebank/domain'
 import { createServerTransactionUseCases } from '@bytebank/infrastructure/server'
+import { withAuthenticatedUser } from '@/server/authentication'
+import { toErrorResponse } from '@/server/errorResponse'
+import {
+  parseCreateTransactionInput,
+  readJsonBody,
+} from '@/server/parseTransactionInput'
 
-const useCases = createServerTransactionUseCases()
+type Params = { params: Promise<Record<string, never>> }
 
-export async function GET(request: Request) {
+export const GET = withAuthenticatedUser<Params>(async (request, _context, user) => {
+  const useCases = createServerTransactionUseCases(user.id)
   const { searchParams } = new URL(request.url)
   const pageParam = searchParams.get('page')
   if (!pageParam) {
@@ -26,10 +33,15 @@ export async function GET(request: Request) {
   })
 
   return NextResponse.json(page)
-}
+})
 
-export async function POST(request: Request) {
-  const body = await request.json()
-  const created = await useCases.createTransaction.execute(body)
-  return NextResponse.json(created, { status: 201 })
-}
+export const POST = withAuthenticatedUser<Params>(async (request, _context, user) => {
+  try {
+    const input = parseCreateTransactionInput(await readJsonBody(request))
+    const useCases = createServerTransactionUseCases(user.id)
+    const created = await useCases.createTransaction.execute(input)
+    return NextResponse.json(created, { status: 201 })
+  } catch (error) {
+    return toErrorResponse(error)
+  }
+})
