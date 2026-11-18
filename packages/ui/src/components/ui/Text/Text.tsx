@@ -1,4 +1,4 @@
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import styles from './Text.module.scss'
 import { TextProps } from './Text.types'
 

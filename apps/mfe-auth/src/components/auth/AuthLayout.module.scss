@@ -1,0 +1,105 @@
+@use '@bytebank/ui/src/styles/variables.scss' as vars;
+@use '@bytebank/ui/src/styles/colors.scss' as colors;
+
+.screen {
+  min-height: 100vh;
+  background: colors.$primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  font-family: vars.$font-family;
+}
+
+.content {
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  color: colors.$tertiary;
+}
+
+.brandMark {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: colors.$tertiary;
+  color: colors.$primary;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.brandName {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.card {
+  background: colors.$white;
+  border-radius: vars.$button-radius;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  color: vars.$color-orange !important;
+  font-weight: 600;
+}
+
+.subtitle {
+  color: vars.$color-orange !important;
+  opacity: 0.65;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.footerMuted {
+  color: colors.$tertiary !important;
+}
+
+.footerAction {
+  color: vars.$color-orange !important;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

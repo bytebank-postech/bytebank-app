@@ -4,7 +4,7 @@ import { IoClose } from 'react-icons/io5'
 import styles from './Modal.module.scss'
 import { ModalProps } from './Modal.types'
 import { useEffect, useRef } from 'react'
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 
 export default function Modal({
   children,

@@ -1,56 +1,45 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { Typography } from '../../ui'
+import { memo } from 'react'
+import Typography from '../../ui/Typography/Typography'
 import Avatar from '../../Avatar/Avatar'
+import Menu from '../Menu/Menu'
 import style from './Header.module.scss'
 
-type AuthUser = {
-  name: string
+export type HeaderProps = {
+  userName?: string
+  onLogout?: () => void
+  currentPath?: string
+  onTransactionsIntent?: () => void
 }
 
-export default function Header() {
-  const [user, setUser] = useState<AuthUser | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch('/auth/api/session', { cache: 'no-store' })
-      .then(async (response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (!cancelled && typeof data?.user?.name === 'string') {
-          setUser(data.user)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  async function handleLogout() {
-    setUser(null)
-
-    try {
-      await fetch('/auth/api/logout', {
-        method: 'POST',
-        cache: 'no-store',
-      })
-    } finally {
-      window.location.assign('/auth')
-    }
-  }
-
+function Header({
+  userName,
+  onLogout,
+  currentPath,
+  onTransactionsIntent,
+}: HeaderProps) {
   return (
     <header className={style.header}>
       <div className={style.content}>
-        {user ? (
+        {currentPath ? (
+          <details className={style.mobileMenu} key={currentPath}>
+            <summary className={style.menuToggle}>Menu</summary>
+            <div className={style.menuPanel}>
+              <Menu
+                currentPath={currentPath}
+                onTransactionsIntent={onTransactionsIntent}
+                placement="mobile"
+              />
+            </div>
+          </details>
+        ) : null}
+        {userName ? (
           <>
-            <Typography color="white">{user.name}</Typography>
+            <Typography color="white">{userName}</Typography>
             <Avatar />
             <button
               type="button"
               className={style.logoutButton}
-              onClick={() => void handleLogout()}
+              onClick={onLogout}
             >
               Sair
             </button>
@@ -60,3 +49,5 @@ export default function Header() {
     </header>
   )
 }
+
+export default memo(Header)

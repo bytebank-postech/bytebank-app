@@ -1,4 +1,4 @@
-import { getClassnames } from '@bytebank/shared'
+import { getClassnames } from '@bytebank/shared/utils'
 import styles from './Datepicker.module.scss'
 import { DatepickerProps } from './Datepicker.types'
 export default function Datepicker({

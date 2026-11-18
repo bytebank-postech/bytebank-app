@@ -16,4 +16,5 @@ export type TypographyProps = {
   variant?: Variant
   color?: 'default' | 'active' | 'white' | 'error'
   weight?: 'normal' | 'bold'
+  role?: React.AriaRole
 }

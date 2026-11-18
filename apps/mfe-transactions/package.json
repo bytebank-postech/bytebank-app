@@ -8,6 +8,8 @@
     "start": "next start -p 3002"
   },
   "dependencies": {
+    "@bytebank/domain": "workspace:*",
+    "@bytebank/infrastructure": "workspace:*",
     "@bytebank/shared": "workspace:*",
     "@bytebank/ui": "workspace:*",
     "next": "16.2.1",

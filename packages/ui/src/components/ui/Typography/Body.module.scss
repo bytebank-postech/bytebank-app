@@ -1,6 +1,6 @@
 @use '../../../styles/colors.scss' as *;
 
-$body-font: 'Inter';
+$body-font: Helvetica, Arial, sans-serif;
 
 .body-base {
   font-family: $body-font;

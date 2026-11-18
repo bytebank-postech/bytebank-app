@@ -1,11 +1,14 @@
-import { verifyAuthToken } from '@bytebank/shared'
+import {
+  AUTH_COOKIE_NAME,
+  createAuthUseCases,
+} from '@bytebank/infrastructure/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value
-  if (!token) return NextResponse.json({ user: null }, { status: 401 })
+const authUseCases = createAuthUseCases()
 
-  const user = await verifyAuthToken(token)
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
+  const user = await authUseCases.getSession.execute(token)
   if (!user) return NextResponse.json({ user: null }, { status: 401 })
 
   return NextResponse.json({ user })

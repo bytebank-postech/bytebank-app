@@ -1,53 +1,47 @@
 import { NextResponse } from 'next/server'
-import { Transaction } from '@bytebank/shared'
+import type { TransactionType } from '@bytebank/domain'
+import { createServerTransactionUseCases } from '@bytebank/infrastructure/server'
+import { withAuthenticatedUser } from '@/server/authentication'
+import { toErrorResponse } from '@/server/errorResponse'
+import {
+  parseCreateTransactionInput,
+  readJsonBody,
+} from '@/server/parseTransactionInput'
 
-import { transactions } from '@/data/inmemory'
+type Params = { params: Promise<Record<string, never>> }
 
-function normalize(value: string) {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-}
-
-export async function GET(request: Request) {
+export const GET = withAuthenticatedUser<Params>(async (request, _context, user) => {
+  const useCases = createServerTransactionUseCases(user.id)
   const { searchParams } = new URL(request.url)
   const pageParam = searchParams.get('page')
-  if (!pageParam) return NextResponse.json(transactions)
-
-  const page = Math.max(1, Number(pageParam) || 1)
-  const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize')) || 10))
-  const search = normalize(searchParams.get('search') ?? '')
-  const type = searchParams.get('type')
-  const month = searchParams.get('month')
-  const filtered = transactions.filter((transaction) => {
-    const matchesSearch =
-      !search ||
-      normalize(transaction.name).includes(search) ||
-      normalize(transaction.type).includes(search) ||
-      normalize(transaction.category ?? '').includes(search)
-    const matchesType = !type || transaction.type === type
-    const matchesMonth = !month || transaction.date.startsWith(`${month}-`)
-    return matchesSearch && matchesType && matchesMonth
-  }).sort((first, second) => second.date.localeCompare(first.date))
-  const total = filtered.length
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-  const currentPage = Math.min(page, totalPages)
-  const start = (currentPage - 1) * pageSize
-
-  return NextResponse.json({
-    items: filtered.slice(start, start + pageSize),
-    total,
-    page: currentPage,
-    pageSize,
-    totalPages,
-  })
-}
-
-export async function POST(request: Request) {
-  const body = await request.json()
-  const newTransaction: Transaction = {
-    ...body,
-    id: crypto.randomUUID(),
-    attachments: [],
+  if (!pageParam) {
+    const items = await useCases.listTransactions.execute()
+    return NextResponse.json(items)
   }
-  transactions.push(newTransaction)
-  return NextResponse.json(newTransaction, { status: 201 })
-}
+
+  const type = searchParams.get('type') as TransactionType | null
+
+  const page = await useCases.getTransactionPage.execute({
+    page: Math.max(1, Number(pageParam) || 1),
+    pageSize: Math.min(
+      50,
+      Math.max(1, Number(searchParams.get('pageSize')) || 10)
+    ),
+    search: searchParams.get('search') ?? undefined,
+    type: type ?? undefined,
+    month: searchParams.get('month') ?? undefined,
+  })
+
+  return NextResponse.json(page)
+})
+
+export const POST = withAuthenticatedUser<Params>(async (request, _context, user) => {
+  try {
+    const input = parseCreateTransactionInput(await readJsonBody(request))
+    const useCases = createServerTransactionUseCases(user.id)
+    const created = await useCases.createTransaction.execute(input)
+    return NextResponse.json(created, { status: 201 })
+  } catch (error) {
+    return toErrorResponse(error)
+  }
+})

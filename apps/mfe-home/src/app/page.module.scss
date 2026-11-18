@@ -60,7 +60,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 
-  .chartCard {
+.chartCard {
     min-height: 460px;
   }
 }
@@ -68,6 +68,10 @@
 .chartCard {
   min-height: 360px;
   padding: 20px;
+}
+
+.chartPlaceholder {
+  min-height: 320px;
 }
 
 .extratoColumn {
@@ -121,7 +125,7 @@
 }
 
 .saldoLabel {
-  font-family: 'Inter', sans-serif;
+  font-family: Helvetica, Arial, sans-serif;
   font-size: 16px;
   font-weight: 600;
   color: vars.$color-white;
@@ -208,7 +212,7 @@
 }
 
 .labelMuted {
-  font-family: 'Inter', sans-serif;
+  font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: 150%;
@@ -289,7 +293,7 @@
 }
 
 .seeMoreLink {
-  font-family: 'Inter', sans-serif;
+  font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: 150%;
@@ -388,7 +392,10 @@
   .welcomeLeft {
     gap: 6px;
   }
-
+   .analytics{
+    display: flex;
+    flex-direction: column;
+  }
   .analyticsHeader {
     align-items: flex-start;
     flex-direction: column;
@@ -406,5 +413,10 @@
 
   .seeMoreLink {
     padding: 6px 0;
+  }
+ 
+  .chartCard{
+    width: 100%;
+    display: flex;
   }
 }

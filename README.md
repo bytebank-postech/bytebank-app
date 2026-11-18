@@ -7,16 +7,20 @@ um design system documentado no Storybook.
 ## Arquitetura
 
 O `shell` é a entrada pública: mantém a API mock, valida a sessão e encaminha
-rotas aos MFEs por rewrites do Next.js.
+rotas aos MFEs por rewrites do Next.js. O domínio e os casos de uso seguem
+Clean Architecture — detalhes em [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-| Módulo | Porta local | Responsabilidade |
-| --- | ---: | --- |
-| `shell` | 3000 | Gateway, JWT e API de transações |
-| `mfe-home` | 3001 | Home, saldo, extrato, criação e gráficos |
-| `mfe-transactions` | 3002 | Busca, filtros, paginação, edição e anexos |
-| `mfe-auth` | 3003 | Login, logout e sessão |
-| `@bytebank/ui` | 6006 | Design system e Storybook |
-| `@bytebank/shared` | — | Tipos, serviços e utilitários compartilhados |
+| Módulo                     | Porta local | Responsabilidade                                |
+| -------------------------- | ----------: | ----------------------------------------------- |
+| `shell`                    |        3000 | Gateway, JWT e API de transações                |
+| `mfe-home`                 |        3001 | Home, saldo, extrato, criação e gráficos        |
+| `mfe-transactions`         |        3002 | Busca, filtros, paginação, edição e anexos      |
+| `mfe-auth`                 |        3003 | Login, logout e sessão                          |
+| `@bytebank/ui`             |        6006 | Design system e Storybook                       |
+| `@bytebank/shared`         |           — | Store Redux, hooks facade e utilitários de UI   |
+| `@bytebank/domain`         |           — | Entidades e regras de negócio                   |
+| `@bytebank/application`    |           — | Ports e use cases                               |
+| `@bytebank/infrastructure` |           — | Adapters HTTP, in-memory e JWT                  |
 
 Rotas públicas: `/`, `/transactions`, `/auth` e `/api/transactions`.
 
@@ -42,7 +46,7 @@ corepack yarn dev
 Abra `http://localhost:3000`. O Turbo inicia todos os MFEs; as portas internas
 estão descritas na tabela de arquitetura.
 
-Credenciais de demonstração:
+Credenciais de demonstração (ou crie uma conta em `/auth/cadastro`):
 
 ```text
 E-mail: usuario@bytebank.com
@@ -63,7 +67,9 @@ comunicam na rede interna. Para encerrar:
 docker compose down
 ```
 
-Use uma chave forte em `JWT_SECRET` fora do ambiente local. Transações e
+Use uma chave forte em `JWT_SECRET` fora do ambiente local; em
+`corepack yarn start` (modo produção sem Docker) a variável é obrigatória e
+deve estar exportada no terminal. Transações e
 anexos usam a API mock em memória e são reinicializados ao recriar o `shell`.
 Para deploy com HTTPS, configure `COOKIE_SECURE=true`; mantenha `false` apenas
 ao testar localmente em HTTP.
@@ -75,8 +81,10 @@ ao testar localmente em HTTP.
 - Sugestão automática de categoria pela descrição, com alteração manual.
 - Upload de PDF, PNG e JPEG de até 5 MB; abertura e remoção de anexos.
 - Busca, filtros por tipo/mês e paginação server-side.
-- Redux Toolkit centraliza filtros, paginação, carregamento e dados da listagem.
-- JWT em cookie HTTP-only; middleware protege rotas privadas.
+- Redux Toolkit centraliza transações, sessão e preferências, com coleção normalizada e seletores memoizados.
+- Busca com debounce, cancelamento de requisições superadas e exclusão otimista com rollback, via listener middleware.
+- JWT em cookie HTTP-only com sessão de 8 horas; `proxy.ts` e cada rota da API validam a sessão.
+- Transações e anexos isolados por usuário; senhas com hash `scrypt` e limite de tentativas de login. Detalhes em `AUTH_GUIDE.md`.
 
 ## Storybook e roteiro de apresentação
 
@@ -108,11 +116,19 @@ Roteiro sugerido para a demonstração: login → Home → nova transação com 
 
 ```text
 apps/
-  shell/                # gateway, middleware JWT e API mock
+  shell/                # gateway, proxy JWT e API mock
   mfe-home/             # Home e análises financeiras
   mfe-transactions/     # listagem e gestão de transações
   mfe-auth/             # autenticação
 packages/
+  domain/               # entidades e regras puras
+  application/          # ports e use cases
+  infrastructure/       # adapters (HTTP, in-memory, JWT)
   ui/                   # design system e Storybook
-  shared/               # contratos e serviços compartilhados
+  shared/               # store Redux, hooks facade e utilitários de UI
+```
+
+```bash
+corepack yarn workspace @bytebank/domain test
+corepack yarn workspace @bytebank/application test
 ```

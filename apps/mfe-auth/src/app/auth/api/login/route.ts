@@ -1,44 +1,49 @@
-import { findUserByEmailAndPassword } from '@/data/users'
-import { signAuthToken } from '@bytebank/shared'
+import { InvalidCredentialsError, ValidationError } from '@bytebank/application'
+import {
+  createAuthUseCases,
+  createLoginAttemptLimiter,
+} from '@bytebank/infrastructure/server'
 import { NextResponse } from 'next/server'
+import {
+  createSessionResponse,
+  readCredentials,
+  toLogMessage,
+} from '@/server/sessionResponse'
+
+const authUseCases = createAuthUseCases()
+const loginAttemptLimiter = createLoginAttemptLimiter()
 
 export async function POST(request: Request) {
+  const { email, password } = await readCredentials(request)
+  const attemptKey = email.trim().toLowerCase()
+
+  const retryAfterSeconds = loginAttemptLimiter.retryAfterSeconds(attemptKey)
+  if (retryAfterSeconds > 0) {
+    return NextResponse.json(
+      { error: 'Muitas tentativas de login. Tente novamente mais tarde.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } }
+    )
+  }
+
   try {
-    const body = await request.json()
-    const { email, password } = body as { email?: string; password?: string }
-
-    const user = findUserByEmailAndPassword(email, password)
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Credenciais inválidas' },
-        { status: 401 }
-      )
+    const { user, token } = await authUseCases.loginUser.execute(
+      email,
+      password
+    )
+    loginAttemptLimiter.reset(attemptKey)
+    return createSessionResponse(user, token)
+  } catch (error) {
+    if (error instanceof InvalidCredentialsError) {
+      loginAttemptLimiter.registerFailure(attemptKey)
+      return NextResponse.json({ error: error.message }, { status: 401 })
     }
-
-    const userData = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
+    if (error instanceof ValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
-
-    const token = await signAuthToken(userData)
-
-    const response = NextResponse.json({
-      token,
-      user: userData,
-    })
-
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 24 * 60 * 60, // 24 horas
-    })
-
-    return response
-  } catch {
-    return NextResponse.json({ error: 'Requisição inválida' }, { status: 400 })
+    console.error('[auth] Falha inesperada no login:', toLogMessage(error))
+    return NextResponse.json(
+      { error: 'Não foi possível concluir a autenticação.' },
+      { status: 400 }
+    )
   }
 }

@@ -5,8 +5,9 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
   min-width: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: Helvetica, Arial, sans-serif;
 }
 
 .title {
@@ -15,7 +16,7 @@
 
 .canvas {
   width: 100%;
-  min-height: 280px;
+  height: clamp(280px, 32vw, 420px);
 }
 
 .tooltip {
@@ -23,7 +24,7 @@
   border: 1px solid $tertiary;
   border-radius: vars.$input-radius;
   padding: 12px 16px;
-  font-family: 'Inter', sans-serif;
+  font-family: Helvetica, Arial, sans-serif;
   box-shadow: none;
 }
 

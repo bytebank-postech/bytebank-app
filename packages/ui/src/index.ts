@@ -7,3 +7,4 @@ export {
   chartTheme,
   transactionTypeColors,
 } from './components/ui/Chart/Chart.theme'
+export type { ChartProps } from './components/ui/Chart/Chart.types'

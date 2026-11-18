@@ -1,41 +1,40 @@
 import { NextResponse } from 'next/server'
-import { transactions } from '@/data/inmemory'
+import { createServerTransactionUseCases } from '@bytebank/infrastructure/server'
+import { withAuthenticatedUser } from '@/server/authentication'
+import { toErrorResponse } from '@/server/errorResponse'
+import {
+  parseUpdateTransactionInput,
+  readJsonBody,
+} from '@/server/parseTransactionInput'
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withAuthenticatedUser<Params>(async (_request, { params }, user) => {
   const { id } = await params
-  const transaction = transactions.find((t) => t.id === id)
-  if (!transaction) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  try {
+    const useCases = createServerTransactionUseCases(user.id)
+    const transaction = await useCases.getTransactionById.execute(id)
+    return NextResponse.json(transaction)
+  } catch (error) {
+    return toErrorResponse(error)
   }
-  return NextResponse.json(transaction)
-}
+})
 
-export async function PUT(request: Request, { params }: Params) {
+export const PUT = withAuthenticatedUser<Params>(async (request, { params }, user) => {
   const { id } = await params
-  const body = await request.json()
-
-  const index = transactions.findIndex((t) => t.id === id)
-
-  if (index !== -1) {
-    transactions[index] = { ...transactions[index], ...body, id }
-  } else {
-    return NextResponse.json({ error: 'not found' }, { status: 404 })
+  try {
+    const input = parseUpdateTransactionInput(await readJsonBody(request))
+    const useCases = createServerTransactionUseCases(user.id)
+    const updated = await useCases.updateTransaction.execute(id, input)
+    return NextResponse.json(updated)
+  } catch (error) {
+    return toErrorResponse(error)
   }
+})
 
-  const updated = transactions.find((t) => t.id === id)
-  console.debug(`content: ${updated}`)
-  return NextResponse.json(updated)
-}
-
-export async function DELETE(_request: Request, { params }: Params) {
+export const DELETE = withAuthenticatedUser<Params>(async (_request, { params }, user) => {
   const { id } = await params
-  const index = transactions.findIndex((t) => t.id === id)
-
-  if (index !== -1) {
-    transactions.splice(index, 1)
-  }
-
+  const useCases = createServerTransactionUseCases(user.id)
+  await useCases.deleteTransaction.execute(id)
   return NextResponse.json({ message: 'Deleted' })
-}
+})

@@ -1,58 +1,44 @@
 import { NextResponse } from 'next/server'
-import { attachments, transactions } from '@/data/inmemory'
-
-const acceptedTypes = new Set(['application/pdf', 'image/jpeg', 'image/png'])
-const maxFileSize = 5 * 1024 * 1024
+import { createServerTransactionUseCases } from '@bytebank/infrastructure/server'
+import { withAuthenticatedUser } from '@/server/authentication'
+import { toErrorResponse } from '@/server/errorResponse'
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withAuthenticatedUser<Params>(async (_request, { params }, user) => {
   const { id } = await params
-  const transaction = transactions.find((item) => item.id === id)
-  if (!transaction) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(transaction.attachments ?? [])
-}
+  try {
+    const useCases = createServerTransactionUseCases(user.id)
+    const attachments = await useCases.listTransactionAttachments.execute(id)
+    return NextResponse.json(attachments)
+  } catch (error) {
+    return toErrorResponse(error)
+  }
+})
 
-export async function POST(request: Request, { params }: Params) {
+export const POST = withAuthenticatedUser<Params>(async (request, { params }, user) => {
   const { id } = await params
-  const transaction = transactions.find((item) => item.id === id)
-  if (!transaction) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
   const formData = await request.formData()
-  const files = formData.getAll('files').filter((item): item is File => item instanceof File)
-  if (files.length === 0) {
-    return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 })
-  }
+  const files = formData
+    .getAll('files')
+    .filter((item): item is File => item instanceof File)
 
-  for (const file of files) {
-    if (!acceptedTypes.has(file.type) || file.size > maxFileSize) {
-      return NextResponse.json(
-        { error: 'Envie arquivos PDF, PNG ou JPEG de até 5 MB.' },
-        { status: 400 }
-      )
-    }
-  }
-
-  const created = await Promise.all(
-    files.map(async (file) => {
-      const attachmentId = crypto.randomUUID()
-      const metadata = {
-        id: attachmentId,
+  try {
+    const uploads = await Promise.all(
+      files.map(async (file) => ({
         name: file.name,
         mimeType: file.type,
         size: file.size,
-        url: `/api/transactions/${id}/attachments/${attachmentId}`,
-      }
-      attachments.set(attachmentId, {
-        transactionId: id,
-        name: file.name,
-        mimeType: file.type,
-        content: Buffer.from(await file.arrayBuffer()),
-      })
-      return metadata
-    })
-  )
-
-  transaction.attachments = [...(transaction.attachments ?? []), ...created]
-  return NextResponse.json(created, { status: 201 })
-}
+        content: await file.arrayBuffer(),
+      }))
+    )
+    const useCases = createServerTransactionUseCases(user.id)
+    const created = await useCases.addTransactionAttachments.execute(
+      id,
+      uploads
+    )
+    return NextResponse.json(created, { status: 201 })
+  } catch (error) {
+    return toErrorResponse(error)
+  }
+})

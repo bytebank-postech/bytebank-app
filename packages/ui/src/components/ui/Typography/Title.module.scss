@@ -1,6 +1,6 @@
 @use '../../../styles/colors.scss' as *;
 
-$title-font: 'Inter';
+$title-font: Helvetica, Arial, sans-serif;
 
 .title-base {
   font-family: $title-font;

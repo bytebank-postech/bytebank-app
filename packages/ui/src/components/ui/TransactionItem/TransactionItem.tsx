@@ -1,10 +1,11 @@
-import { getClassnames } from '@bytebank/shared'
+import { memo } from 'react'
+import { getClassnames } from '@bytebank/shared/utils'
 import styles from './TransactionItem.module.scss'
 import { TransactionItemProps } from './TransactionItem.types'
 import Typography from '../Typography/Typography'
 import PopupMenu from '../PopupMenu/PopupMenu'
 
-export default function TransactionItem({
+function TransactionItem({
   type,
   name,
   amount,
@@ -136,3 +137,5 @@ export default function TransactionItem({
     </div>
   )
 }
+
+export default memo(TransactionItem)
